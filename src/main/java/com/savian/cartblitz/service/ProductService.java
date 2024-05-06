@@ -14,6 +14,7 @@ public interface ProductService {
     List<ProductDto> getProductsByCategory(String category);
     List<ProductDto> getProductsByBrand(String brand);
     List<ProductDto> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice);
+    List<ProductDto> getProductsByTagId(Long tagId);
     Product updateStockQuantity(Long productId, Integer stockQuantity);
 
     Product saveProduct(ProductDto productDto);

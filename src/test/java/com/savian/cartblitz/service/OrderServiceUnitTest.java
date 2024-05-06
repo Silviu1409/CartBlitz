@@ -17,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("h2")
 public class OrderServiceUnitTest {
     @InjectMocks
     private OrderServiceImpl orderService;

@@ -32,8 +32,5 @@ public class OrderDto {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private List<OrderProductDto> orderProducts;
 
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private List<WarrantyDto> warranties;
-
     public OrderDto() {}
 }

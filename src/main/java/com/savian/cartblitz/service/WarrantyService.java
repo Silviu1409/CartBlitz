@@ -9,9 +9,6 @@ public interface WarrantyService {
     List<WarrantyDto> getAllWarranties();
     Optional<WarrantyDto> getWarrantyById(Long warrantyId);
 
-    List<WarrantyDto> getWarrantiesByOrderId(Long orderId);
-    List<WarrantyDto> getWarrantiesByProductId(Long productId);
-
     WarrantyDto saveWarranty(WarrantyDto warrantyDto);
     WarrantyDto updateWarranty(Long warrantyId, WarrantyDto warrantyDto);
     void removeWarrantyById(Long warrantyId);

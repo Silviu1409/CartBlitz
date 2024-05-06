@@ -58,6 +58,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
 
+    @ExceptionHandler({ TagNotFoundException.class})
+    public ResponseEntity<String> handle(TagNotFoundException e){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+
+    @ExceptionHandler({ TagNameDuplicateException.class})
+    public ResponseEntity<String> handle(TagNameDuplicateException e){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Object> handleValidationExceptions(MethodArgumentNotValidException e) {
         Map<String, Object> errors = new LinkedHashMap<>();

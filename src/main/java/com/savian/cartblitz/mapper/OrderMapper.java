@@ -4,22 +4,17 @@ import com.savian.cartblitz.dto.OrderDto;
 import com.savian.cartblitz.model.Order;
 import com.savian.cartblitz.repository.CustomerRepository;
 import com.savian.cartblitz.repository.OrderProductRepository;
-import com.savian.cartblitz.repository.WarrantyRepository;
 import org.springframework.stereotype.Component;
 
 @Component
 public class OrderMapper {
     private final OrderProductMapper orderProductMapper;
-    private final WarrantyMapper warrantyMapper;
     private final OrderProductRepository orderProductRepository;
-    private final WarrantyRepository warrantyRepository;
     private final CustomerRepository customerRepository;
 
-    public OrderMapper(OrderProductMapper orderProductMapper, WarrantyMapper warrantyMapper, OrderProductRepository orderProductRepository, WarrantyRepository warrantyRepository, CustomerRepository customerRepository) {
+    public OrderMapper(OrderProductMapper orderProductMapper, OrderProductRepository orderProductRepository, CustomerRepository customerRepository) {
         this.orderProductMapper = orderProductMapper;
-        this.warrantyMapper = warrantyMapper;
         this.orderProductRepository = orderProductRepository;
-        this.warrantyRepository = warrantyRepository;
         this.customerRepository = customerRepository;
     }
 
@@ -33,9 +28,6 @@ public class OrderMapper {
         if (order.getOrderProducts() != null){
             orderDto.setOrderProducts(order.getOrderProducts().stream().map(orderProductMapper::orderProductToOrderProductDto).toList());
         }
-        if (order.getWarranties() != null) {
-            orderDto.setWarranties(order.getWarranties().stream().map(warrantyMapper::warrantyToWarrantyDto).toList());
-        }
         return orderDto;
     }
 
@@ -47,7 +39,6 @@ public class OrderMapper {
         order.setStatus(orderDto.getStatus());
         order.setOrderDate(orderDto.getOrderDate());
         order.setOrderProducts(orderProductRepository.findByOrderOrderId(orderDto.getOrderId()));
-        order.setWarranties(warrantyRepository.findByOrderOrderId(orderDto.getOrderId()));
         return order;
     }
 }

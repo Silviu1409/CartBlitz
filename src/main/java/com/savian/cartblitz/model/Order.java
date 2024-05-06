@@ -37,9 +37,6 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderProduct> orderProducts;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
-    private List<Warranty> warranties;
-
     public Order() {}
 
     @Override
@@ -64,7 +61,6 @@ public class Order {
                 ", status=" + status +
                 ", orderDate=" + orderDate +
                 ", orderProducts=" + orderProducts +
-                ", warranties=" + warranties +
                 '}';
     }
 }

@@ -2,6 +2,7 @@ package com.savian.cartblitz.endpoint;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.savian.cartblitz.dto.ProductDto;
+import com.savian.cartblitz.dto.TagDto;
 import com.savian.cartblitz.exception.ProductNotFoundException;
 import com.savian.cartblitz.mapper.ProductMapper;
 import com.savian.cartblitz.model.Product;
@@ -12,10 +13,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,6 +29,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("mysql")
 public class ProductControllerUnitTest {
     @Autowired
     private MockMvc mockMvc;
@@ -126,6 +130,21 @@ public class ProductControllerUnitTest {
                 .andExpect(jsonPath("$.size()", is(productDtoList.size())))
                 .andExpect(jsonPath("$[0].name", is(productDtoList.get(0).getName())))
                 .andExpect(jsonPath("$[1].name", is(productDtoList.get(1).getName())));
+    }
+
+    @Test
+    public void testGetProductsByTagIdSuccess() throws Exception {
+        ProductDto productOne = getDummyProductDtoOne();
+        TagDto tagDto = getDummyTagDto();
+        productOne.setTags(Collections.singletonList(tagDto));
+
+        when(productService.getProductsByTagId(productOne.getTags().get(0).getTagId())).thenReturn(List.of(productOne));
+
+        mockMvc.perform(get("/product/tag/{tagId}", productOne.getTags().get(0).getTagId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$[0].productId").value(productOne.getProductId()));
     }
 
     @Test
@@ -252,5 +271,12 @@ public class ProductControllerUnitTest {
         productDto.setBrand("productTest brand");
         productDto.setCategory("productTest category");
         return productDto;
+    }
+
+    private TagDto getDummyTagDto(){
+        TagDto tagDto = new TagDto();
+        tagDto.setTagId(10L);
+        tagDto.setName("name");
+        return tagDto;
     }
 }

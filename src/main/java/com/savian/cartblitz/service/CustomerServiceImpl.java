@@ -75,12 +75,12 @@ public class CustomerServiceImpl implements CustomerService{
         Optional<Customer> optCustomer = customerRepository.findById(customerId);
 
         if (optCustomer.isPresent()) {
-            Customer existingCustomer = optCustomer.get();
-
             Optional<Customer> duplicateCustomer = customerRepository.findByUsername(updatedCustomer.getUsername());
             if (duplicateCustomer.isPresent() && !Objects.equals(duplicateCustomer.get().getCustomerId(), customerId)) {
                 throw new CustomerUsernameDuplicateException();
             }
+
+            Customer existingCustomer = optCustomer.get();
 
             existingCustomer.setUsername(updatedCustomer.getUsername());
             existingCustomer.setPassword(updatedCustomer.getPassword());
@@ -96,6 +96,7 @@ public class CustomerServiceImpl implements CustomerService{
     @Override
     public void removeCustomerById(Long customerId) {
         Optional<Customer> customer = customerRepository.findById(customerId);
+
         if(customer.isPresent()){
             customerRepository.deleteById(customerId);
         }

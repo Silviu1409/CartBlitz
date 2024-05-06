@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.savian.cartblitz.dto.WarrantyDto;
 import com.savian.cartblitz.exception.WarrantyNotFoundException;
 import com.savian.cartblitz.mapper.WarrantyMapper;
-import com.savian.cartblitz.model.*;
 import com.savian.cartblitz.service.WarrantyService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,11 +11,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +25,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("mysql")
 public class WarrantyControllerUnitTest {
     @Autowired
     private MockMvc mockMvc;
@@ -73,36 +71,6 @@ public class WarrantyControllerUnitTest {
         mockMvc.perform(get("/warranty/id/{warrantyId}", warrantyId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
-    }
-
-    @Test
-    public void testGetWarrantiesByOrderId() throws Exception {
-        WarrantyDto warrantyDtoOne = getDummyWarrantyDtoOne();
-        WarrantyDto warrantyDtoTwo = getDummyWarrantyDtoTwo();
-        List<WarrantyDto> warrantyDtoList = Arrays.asList(warrantyDtoOne, warrantyDtoTwo);
-
-        when(warrantyService.getWarrantiesByOrderId(warrantyDtoOne.getOrderId())).thenReturn(warrantyDtoList);
-
-        mockMvc.perform(get("/warranty/order/{orderId}", warrantyDtoOne.getOrderId())
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$", hasSize(2)));
-    }
-
-    @Test
-    public void testGetWarrantiesByProductId() throws Exception {
-        WarrantyDto warrantyDtoOne = getDummyWarrantyDtoOne();
-        WarrantyDto warrantyDtoTwo = getDummyWarrantyDtoTwo();
-        List<WarrantyDto> warrantyDtoList = Arrays.asList(warrantyDtoOne, warrantyDtoTwo);
-
-        when(warrantyService.getWarrantiesByProductId(warrantyDtoOne.getProductId())).thenReturn(warrantyDtoList);
-
-        mockMvc.perform(get("/warranty/product/{productId}", warrantyDtoOne.getProductId())
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$", hasSize(2)));
     }
 
     @Test
@@ -181,50 +149,20 @@ public class WarrantyControllerUnitTest {
     private WarrantyDto getDummyWarrantyDtoOne(){
         WarrantyDto warrantyDto = new WarrantyDto();
         warrantyDto.setWarrantyId(10L);
-        warrantyDto.setOrderId(getDummyOrder().getOrderId());
-        warrantyDto.setProductId(getDummyProduct().getProductId());
         warrantyDto.setDurationMonths(0);
+        warrantyDto.setType("type");
+        warrantyDto.setTerms("terms");
+        warrantyDto.setDetails("details");
         return warrantyDto;
     }
 
     private WarrantyDto getDummyWarrantyDtoTwo(){
         WarrantyDto warrantyDto = new WarrantyDto();
         warrantyDto.setWarrantyId(11L);
-        warrantyDto.setOrderId(getDummyOrder().getOrderId());
-        warrantyDto.setProductId(getDummyProduct().getProductId());
         warrantyDto.setDurationMonths(0);
+        warrantyDto.setType("type");
+        warrantyDto.setTerms("terms");
+        warrantyDto.setDetails("details");
         return warrantyDto;
-    }
-
-    private Order getDummyOrder(){
-        Order order = new Order();
-        order.setOrderId(10L);
-        order.setCustomer(getDummyCustomer());
-        order.setTotalAmount(BigDecimal.valueOf(0));
-        order.setStatus(OrderStatusEnum.CART);
-        order.setOrderDate(Timestamp.valueOf(LocalDateTime.now()));
-        return order;
-    }
-
-    private Customer getDummyCustomer(){
-        Customer customer = new Customer();
-        customer.setCustomerId(10L);
-        customer.setUsername("userTest");
-        customer.setPassword("718%BYYLo");
-        customer.setEmail("test@test.com");
-        customer.setFullName("User Test");
-        return customer;
-    }
-
-    private Product getDummyProduct(){
-        Product product = new Product();
-        product.setProductId(10L);
-        product.setName("productTest");
-        product.setPrice(BigDecimal.valueOf(0L));
-        product.setStockQuantity(0);
-        product.setDescription("productTest description");
-        product.setBrand("productTest brand");
-        product.setCategory("productTest category");
-        return product;
     }
 }

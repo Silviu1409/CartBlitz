@@ -1,6 +1,5 @@
 package com.savian.cartblitz.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,18 +15,20 @@ public class Warranty {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long warrantyId;
 
-    @JsonIgnore
-    @ManyToOne
-    @JoinColumn(name = "order_id")
-    private Order order;
-
-    @JsonIgnore
-    @ManyToOne
-    @JoinColumn(name = "product_id")
+    @OneToOne(mappedBy = "warranty", cascade = CascadeType.ALL)
     private Product product;
 
     @Column(name = "duration_months", nullable = false)
     private Integer durationMonths;
+
+    @Column(name = "type", nullable = false)
+    private String type;
+
+    @Column(name = "terms", nullable = false)
+    private String terms;
+
+    @Column(name = "details", nullable = false)
+    private String details;
 
     public Warranty() {}
 
@@ -36,21 +37,23 @@ public class Warranty {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Warranty warranty = (Warranty) o;
-        return Objects.equals(warrantyId, warranty.warrantyId) && Objects.equals(order, warranty.order) && Objects.equals(product, warranty.product) && Objects.equals(durationMonths, warranty.durationMonths);
+        return Objects.equals(warrantyId, warranty.warrantyId) && Objects.equals(product, warranty.product) && Objects.equals(durationMonths, warranty.durationMonths) && Objects.equals(type, warranty.type) && Objects.equals(terms, warranty.terms) && Objects.equals(details, warranty.details);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(warrantyId, order, product, durationMonths);
+        return Objects.hash(warrantyId, product, durationMonths, type, terms, details);
     }
 
     @Override
     public String toString() {
         return "Warranty{" +
                 "warrantyId=" + warrantyId +
-                ", order=" + order +
                 ", product=" + product +
-                ", duration_months=" + durationMonths +
+                ", durationMonths=" + durationMonths +
+                ", type='" + type + '\'' +
+                ", terms='" + terms + '\'' +
+                ", details='" + details + '\'' +
                 '}';
     }
 }

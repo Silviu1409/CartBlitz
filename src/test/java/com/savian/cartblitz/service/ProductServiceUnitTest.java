@@ -2,9 +2,12 @@ package com.savian.cartblitz.service;
 
 import com.savian.cartblitz.dto.ProductDto;
 import com.savian.cartblitz.exception.ProductNotFoundException;
+import com.savian.cartblitz.exception.TagNotFoundException;
 import com.savian.cartblitz.mapper.ProductMapper;
 import com.savian.cartblitz.model.Product;
+import com.savian.cartblitz.model.Tag;
 import com.savian.cartblitz.repository.ProductRepository;
+import com.savian.cartblitz.repository.TagRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,18 +15,23 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("h2")
 public class ProductServiceUnitTest {
     @InjectMocks
     private ProductServiceImpl productService;
     @Mock
     private ProductRepository productRepository;
+    @Mock
+    private TagRepository tagRepository;
     @Mock
     private ProductMapper productMapper;
 
@@ -101,6 +109,36 @@ public class ProductServiceUnitTest {
         List<ProductDto> result = productService.getProductsByPriceRange(product.getPrice(), product.getPrice());
 
         Mockito.verify(productRepository).findByPriceBetween(product.getPrice(), product.getPrice());
+        Assertions.assertEquals(products.stream().map(productMapper::productToProductDto).toList(), result);
+    }
+
+    @Test
+    public void testGetProductsByTagIdNotFound(){
+        Product product = getDummyProduct();
+        Tag tag = getDummyTag();
+        product.setTags(Collections.singletonList(tag));
+
+        Mockito.when(tagRepository.findById(Mockito.anyLong())).thenReturn(Optional.empty());
+
+        Assertions.assertThrows(TagNotFoundException.class, () -> productService.getProductsByTagId(tag.getTagId()));
+
+        Mockito.verify(productRepository, Mockito.never()).findByTagsTagId(Mockito.anyLong());
+    }
+
+    @Test
+    public void testGetProductsByTagIdFound(){
+        List<Product> products = new ArrayList<>();
+        Product product = getDummyProduct();
+        Tag tag = getDummyTag();
+        product.setTags(Collections.singletonList(tag));
+        products.add(product);
+
+        Mockito.when(tagRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(tag));
+        Mockito.when(productRepository.findByTagsTagId(Mockito.anyLong())).thenReturn(products);
+
+        List<ProductDto> result = productService.getProductsByTagId(tag.getTagId());
+
+        Mockito.verify(productRepository).findByTagsTagId(tag.getTagId());
         Assertions.assertEquals(products.stream().map(productMapper::productToProductDto).toList(), result);
     }
 
@@ -222,5 +260,12 @@ public class ProductServiceUnitTest {
         productDto.setBrand("productTest brand");
         productDto.setCategory("productTest category");
         return productDto;
+    }
+
+    private Tag getDummyTag(){
+        Tag tag = new Tag();
+        tag.setTagId(10L);
+        tag.setName("name");
+        return tag;
     }
 }

@@ -1,6 +1,7 @@
 package com.savian.cartblitz.controller;
 
 import com.savian.cartblitz.dto.ProductDto;
+import com.savian.cartblitz.model.OrderProduct;
 import com.savian.cartblitz.model.Product;
 import com.savian.cartblitz.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -126,6 +127,25 @@ public class ProductController {
             @RequestParam(name = "minPrice", required = false, defaultValue = "0.00") BigDecimal minPrice,
             @RequestParam(name = "maxPrice", required = false, defaultValue = "100000000.00") BigDecimal maxPrice){
         return ResponseEntity.ok(productService.getProductsByPriceRange(minPrice, maxPrice));
+    }
+
+    @GetMapping(path = "/tag/{tagId}", produces = { MediaType.APPLICATION_JSON_VALUE })
+    @Operation(description = "Showing all info about products with the given tag id",
+            summary = "Showing products from the given tag id",
+            responses = {
+                    @ApiResponse(
+                            description = "Success",
+                            responseCode = "200"
+                    ),
+                    @ApiResponse(
+                            description = "Not Found",
+                            responseCode = "404"
+                    ),
+            })
+    public ResponseEntity<List<ProductDto>> GetProductsByTagId(
+            @PathVariable
+            @Parameter(name = "tagid", description = "Tag id", example = "1", required = true) Long tagId){
+        return ResponseEntity.ok(productService.getProductsByTagId(tagId));
     }
 
     @PatchMapping

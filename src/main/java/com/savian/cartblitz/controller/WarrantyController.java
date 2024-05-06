@@ -19,7 +19,7 @@ import java.util.Optional;
 @RestController
 @Validated
 @RequestMapping("warranty")
-@Tag(name = "Warranty",description = "Endpoint manage Warranties")
+@Tag(name = "Warranties",description = "Endpoint manage Warranties")
 public class WarrantyController {
     WarrantyService warrantyService;
 
@@ -67,44 +67,6 @@ public class WarrantyController {
         } else {
             return ResponseEntity.notFound().build();
         }
-    }
-
-    @GetMapping(path = "/order/{orderId}", produces = { MediaType.APPLICATION_JSON_VALUE })
-    @Operation(description = "Showing all info about warranties written by the order with the given id",
-            summary = "Showing warranties from the given order",
-            responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
-            })
-    public ResponseEntity<List<WarrantyDto>> GetWarrantiesByOrderId(
-            @PathVariable
-            @Parameter(name = "orderId", description = "Order id", example = "1", required = true) Long orderId){
-        return ResponseEntity.ok(warrantyService.getWarrantiesByOrderId(orderId));
-    }
-
-    @GetMapping(path = "/product/{productId}", produces = { MediaType.APPLICATION_JSON_VALUE })
-    @Operation(description = "Showing all info about warranties for the product with the given id",
-            summary = "Showing warranties with the given product",
-            responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
-            })
-    public ResponseEntity<List<WarrantyDto>> GetWarrantiesByProductId(
-            @PathVariable
-            @Parameter(name = "productId", description = "Product id", example = "1", required = true) Long productId){
-        return ResponseEntity.ok(warrantyService.getWarrantiesByProductId(productId));
     }
 
     @PostMapping(consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = {MediaType.APPLICATION_JSON_VALUE })

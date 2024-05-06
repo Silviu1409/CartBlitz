@@ -37,8 +37,10 @@ public class ProductDto {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private List<ReviewDto> reviews;
 
+    private Long warrantyId;
+
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private List<WarrantyDto> warranties;
+    private List<TagDto> tags;
 
     public ProductDto() {}
 }

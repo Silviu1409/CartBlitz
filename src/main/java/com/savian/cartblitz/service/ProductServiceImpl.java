@@ -2,9 +2,11 @@ package com.savian.cartblitz.service;
 
 import com.savian.cartblitz.dto.ProductDto;
 import com.savian.cartblitz.exception.ProductNotFoundException;
+import com.savian.cartblitz.exception.TagNotFoundException;
 import com.savian.cartblitz.mapper.ProductMapper;
 import com.savian.cartblitz.model.Product;
 import com.savian.cartblitz.repository.ProductRepository;
+import com.savian.cartblitz.repository.TagRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -14,13 +16,14 @@ import java.util.Optional;
 @Service
 public class ProductServiceImpl implements ProductService{
     private final ProductRepository productRepository;
+    private final TagRepository tagRepository;
     private final ProductMapper productMapper;
 
-    public ProductServiceImpl(ProductRepository productRepository, ProductMapper productMapper) {
+    public ProductServiceImpl(ProductRepository productRepository, TagRepository tagRepository, ProductMapper productMapper) {
         this.productRepository = productRepository;
+        this.tagRepository = tagRepository;
         this.productMapper = productMapper;
     }
-
 
     @Override
     public List<ProductDto> getAllProducts() {
@@ -51,6 +54,13 @@ public class ProductServiceImpl implements ProductService{
     @Override
     public List<ProductDto> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
         return productRepository.findByPriceBetween(minPrice, maxPrice).stream().map(productMapper::productToProductDto).toList();
+    }
+
+    @Override
+    public List<ProductDto> getProductsByTagId(Long tagId) {
+        tagRepository.findById(tagId).orElseThrow(() -> new TagNotFoundException(tagId));
+
+        return productRepository.findByTagsTagId(tagId).stream().map(productMapper::productToProductDto).toList();
     }
 
     @Override

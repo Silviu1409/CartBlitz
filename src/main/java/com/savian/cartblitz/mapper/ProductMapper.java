@@ -11,15 +11,15 @@ import org.springframework.stereotype.Component;
 public class ProductMapper {
     private final OrderProductMapper orderProductMapper;
     private final ReviewMapper reviewMapper;
-    private final WarrantyMapper warrantyMapper;
+    private final TagMapper tagMapper;
     private final OrderProductRepository orderProductRepository;
     private final ReviewRepository reviewRepository;
     private final WarrantyRepository warrantyRepository;
 
-    public ProductMapper(OrderProductMapper orderProductMapper, ReviewMapper reviewMapper, WarrantyMapper warrantyMapper, OrderProductRepository orderProductRepository, ReviewRepository reviewRepository, WarrantyRepository warrantyRepository) {
+    public ProductMapper(OrderProductMapper orderProductMapper, ReviewMapper reviewMapper, TagMapper tagMapper, OrderProductRepository orderProductRepository, ReviewRepository reviewRepository, WarrantyRepository warrantyRepository) {
         this.orderProductMapper = orderProductMapper;
         this.reviewMapper = reviewMapper;
-        this.warrantyMapper = warrantyMapper;
+        this.tagMapper = tagMapper;
         this.orderProductRepository = orderProductRepository;
         this.reviewRepository = reviewRepository;
         this.warrantyRepository = warrantyRepository;
@@ -36,7 +36,8 @@ public class ProductMapper {
         product.setCategory(productDto.getCategory());
         product.setOrderProducts(orderProductRepository.findByProductProductId(product.getProductId()));
         product.setReviews(reviewRepository.findByProductProductId(product.getProductId()));
-        product.setWarranties(warrantyRepository.findByProductProductId(product.getProductId()));
+        product.setWarranty(warrantyRepository.getReferenceById(productDto.getWarrantyId()));
+        product.setTags(tagMapper.tagDtosToTags(productDto.getTags()));
         return product;
     }
 
@@ -51,7 +52,8 @@ public class ProductMapper {
         productDto.setCategory(product.getCategory());
         productDto.setOrderProducts(product.getOrderProducts().stream().map(orderProductMapper::orderProductToOrderProductDto).toList());
         productDto.setReviews(product.getReviews().stream().map(reviewMapper::reviewToReviewDto).toList());
-        productDto.setWarranties(product.getWarranties().stream().map(warrantyMapper::warrantyToWarrantyDto).toList());
+        productDto.setWarrantyId(product.getWarranty().getWarrantyId());
+        productDto.setTags(tagMapper.tagsToTagDtos(product.getTags()));
         return productDto;
     }
 }

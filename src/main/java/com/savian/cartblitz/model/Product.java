@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -41,8 +42,17 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<Review> reviews;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
-    private List<Warranty> warranties;
+    @OneToOne
+    @JoinColumn(name = "warranty_id")
+    private Warranty warranty;
+
+    @ManyToMany
+    @JoinTable(
+            name = "product_tag",
+            joinColumns = @JoinColumn(name = "product_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private List<Tag> tags = new ArrayList<>();
 
     public Product() {}
 
@@ -71,7 +81,8 @@ public class Product {
                 ", category='" + category + '\'' +
                 ", orderProducts=" + orderProducts +
                 ", reviews=" + reviews +
-                ", warranties=" + warranties +
+                ", warranty=" + warranty +
+                ", tags=" + tags +
                 '}';
     }
 }

@@ -3,10 +3,7 @@ package com.savian.cartblitz.service;
 import com.savian.cartblitz.dto.WarrantyDto;
 import com.savian.cartblitz.exception.*;
 import com.savian.cartblitz.mapper.WarrantyMapper;
-import com.savian.cartblitz.model.*;
 import com.savian.cartblitz.model.Warranty;
-import com.savian.cartblitz.repository.OrderRepository;
-import com.savian.cartblitz.repository.ProductRepository;
 import com.savian.cartblitz.repository.WarrantyRepository;
 import org.springframework.stereotype.Service;
 
@@ -17,16 +14,10 @@ import java.util.Optional;
 public class WarrantyServiceImpl implements WarrantyService{
     private final WarrantyRepository warrantyRepository;
     private final WarrantyMapper warrantyMapper;
-    private final OrderRepository orderRepository;
-    private final ProductRepository productRepository;
-    private final OrderProductService orderProductService;
 
-    public WarrantyServiceImpl(WarrantyRepository warrantyRepository, WarrantyMapper warrantyMapper, OrderRepository orderRepository, ProductRepository productRepository, OrderProductService orderProductService) {
+    public WarrantyServiceImpl(WarrantyRepository warrantyRepository, WarrantyMapper warrantyMapper) {
         this.warrantyRepository = warrantyRepository;
         this.warrantyMapper = warrantyMapper;
-        this.orderRepository = orderRepository;
-        this.productRepository = productRepository;
-        this.orderProductService = orderProductService;
     }
 
     @Override
@@ -47,67 +38,25 @@ public class WarrantyServiceImpl implements WarrantyService{
     }
 
     @Override
-    public List<WarrantyDto> getWarrantiesByOrderId(Long orderId) {
-        orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
-
-        return warrantyRepository.findByOrderOrderId(orderId).stream().map(warrantyMapper::warrantyToWarrantyDto).toList();
-    }
-
-    @Override
-    public List<WarrantyDto> getWarrantiesByProductId(Long productId) {
-        productRepository.findById(productId).orElseThrow(() -> new ProductNotFoundException(productId));
-
-        return warrantyRepository.findByProductProductId(productId).stream().map(warrantyMapper::warrantyToWarrantyDto).toList();
-    }
-
-    @Override
     public WarrantyDto saveWarranty(WarrantyDto warrantyDto) {
-        Order order = orderRepository.findById(warrantyDto.getOrderId())
-                .orElseThrow(() -> new OrderNotFoundException(warrantyDto.getOrderId()));
+        Warranty savedWarranty = warrantyRepository.save(warrantyMapper.warrantyDtoToWarranty(warrantyDto));
 
-        Product product = productRepository.findById(warrantyDto.getProductId())
-                .orElseThrow(() -> new ProductNotFoundException(warrantyDto.getProductId()));
-
-        Optional<OrderProduct> optOrderProduct = orderProductService.getOrderProductByOrderIdAndProductId(order.getOrderId(), product.getProductId());
-
-        if (optOrderProduct.isPresent()){
-            Warranty warranty = new Warranty();
-
-            warranty.setOrder(order);
-            warranty.setProduct(product);
-            warranty.setDurationMonths(warrantyDto.getDurationMonths());
-
-            return warrantyMapper.warrantyToWarrantyDto(warrantyRepository.save(warranty));
-        }
-        else{
-            throw new OrderProductNotFoundException(order.getOrderId(), product.getProductId());
-        }
+        return warrantyMapper.warrantyToWarrantyDto(savedWarranty);
     }
 
     @Override
     public WarrantyDto updateWarranty(Long warrantyId, WarrantyDto warrantyDto) {
         Optional<Warranty> optWarranty = warrantyRepository.findById(warrantyId);
+
         if (optWarranty.isPresent()){
-            Order order = orderRepository.findById(warrantyDto.getOrderId())
-                    .orElseThrow(() -> new OrderNotFoundException(warrantyDto.getOrderId()));
+            Warranty prevWarranty = optWarranty.get();
 
-            Product product = productRepository.findById(warrantyDto.getProductId())
-                    .orElseThrow(() -> new ProductNotFoundException(warrantyDto.getProductId()));
+            prevWarranty.setDurationMonths(warrantyDto.getDurationMonths());
+            prevWarranty.setType(warrantyDto.getType());
+            prevWarranty.setTerms(warrantyDto.getTerms());
+            prevWarranty.setDetails(warrantyDto.getDetails());
 
-            Optional<OrderProduct> optOrderProduct = orderProductService.getOrderProductByOrderIdAndProductId(order.getOrderId(), product.getProductId());
-
-            if (optOrderProduct.isPresent()) {
-                Warranty prevWarranty = optWarranty.get();
-
-                prevWarranty.setOrder(order);
-                prevWarranty.setProduct(product);
-                prevWarranty.setDurationMonths(warrantyDto.getDurationMonths());
-
-                return warrantyMapper.warrantyToWarrantyDto(warrantyRepository.save(prevWarranty));
-            }
-            else {
-                throw new OrderProductNotFoundException(order.getOrderId(), product.getProductId());
-            }
+            return warrantyMapper.warrantyToWarrantyDto(warrantyRepository.save(prevWarranty));
         }
         else{
             throw new WarrantyNotFoundException(warrantyId);
