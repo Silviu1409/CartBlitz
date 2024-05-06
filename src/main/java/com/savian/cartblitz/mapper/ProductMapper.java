@@ -36,7 +36,9 @@ public class ProductMapper {
         product.setCategory(productDto.getCategory());
         product.setOrderProducts(orderProductRepository.findByProductProductId(product.getProductId()));
         product.setReviews(reviewRepository.findByProductProductId(product.getProductId()));
-        product.setWarranty(warrantyRepository.getReferenceById(productDto.getWarrantyId()));
+        if(productDto.getWarrantyId() != null){
+            product.setWarranty(warrantyRepository.getReferenceById(productDto.getWarrantyId()));
+        }
         product.setTags(tagMapper.tagDtosToTags(productDto.getTags()));
         return product;
     }
@@ -52,7 +54,9 @@ public class ProductMapper {
         productDto.setCategory(product.getCategory());
         productDto.setOrderProducts(product.getOrderProducts().stream().map(orderProductMapper::orderProductToOrderProductDto).toList());
         productDto.setReviews(product.getReviews().stream().map(reviewMapper::reviewToReviewDto).toList());
-        productDto.setWarrantyId(product.getWarranty().getWarrantyId());
+        if(product.getWarranty() != null) {
+            productDto.setWarrantyId(product.getWarranty().getWarrantyId());
+        }
         productDto.setTags(tagMapper.tagsToTagDtos(product.getTags()));
         return productDto;
     }

@@ -10,6 +10,7 @@ import com.savian.cartblitz.model.Order;
 import com.savian.cartblitz.model.OrderStatusEnum;
 import com.savian.cartblitz.repository.CustomerRepository;
 import com.savian.cartblitz.repository.OrderRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +29,7 @@ import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("h2")
+@Slf4j
 public class OrderServiceUnitTest {
     @InjectMocks
     private OrderServiceImpl orderService;
@@ -43,13 +45,18 @@ public class OrderServiceUnitTest {
         Order order = getDummyOrder();
         OrderDto orderDto = getDummyOrderDto();
 
+        log.info("Starting testGetAllOrders");
+
         Mockito.when(orderRepository.findAll()).thenReturn(Collections.singletonList(order));
         Mockito.when(orderMapper.orderToOrderDto(order)).thenReturn(orderDto);
 
         List<OrderDto> result = orderService.getAllOrders();
+        log.info(String.valueOf(order.getOrderId()));
 
         Assertions.assertEquals(1, result.size());
         Assertions.assertEquals(orderDto, result.get(0));
+
+        log.info("Finished testGetAllOrders successfully");
     }
 
     @Test
@@ -57,23 +64,33 @@ public class OrderServiceUnitTest {
         Order order = getDummyOrder();
         OrderDto orderDto = getDummyOrderDto();
 
+        log.info("Starting testGetOrderByIdFound");
+
         Mockito.when(orderRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(order));
         Mockito.when(orderMapper.orderToOrderDto(Mockito.any(Order.class))).thenReturn(orderDto);
 
         Optional<OrderDto> result = orderService.getOrderById(orderDto.getOrderId());
+        result.ifPresent(value -> log.info(String.valueOf(value.getOrderId())));
 
         Mockito.verify(orderRepository).findById(order.getOrderId());
         Assertions.assertTrue(result.isPresent());
         Assertions.assertEquals(orderDto, result.get());
+
+        log.info("Finished testGetOrderByIdFound successfully");
     }
 
     @Test
     void testGetOrderByIdNotFound() {
         Order order = getDummyOrder();
 
+        log.info("Starting testGetOrderByIdNotFound");
+
         Mockito.when(orderRepository.findById(Mockito.anyLong())).thenReturn(Optional.empty());
 
         Assertions.assertThrows(OrderNotFoundException.class, () -> orderService.getOrderById(order.getOrderId()));
+        log.error("Order with given ID was not found");
+
+        log.info("Finished testGetOrderByIdNotFound successfully");
     }
 
     @Test
@@ -81,23 +98,33 @@ public class OrderServiceUnitTest {
         Order order = getDummyOrder();
         OrderDto orderDto = getDummyOrderDto();
 
+        log.info("Starting testGetOrdersByCustomerIdFound");
+
         Mockito.when(customerRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(order.getCustomer()));
         Mockito.when(orderRepository.findByCustomerCustomerId(Mockito.anyLong())).thenReturn(Collections.singletonList(order));
         Mockito.when(orderMapper.orderToOrderDto(order)).thenReturn(orderDto);
 
         List<OrderDto> result = orderService.getOrdersByCustomerId(orderDto.getCustomerId());
+        log.info(String.valueOf(order.getOrderId()));
 
         Assertions.assertEquals(1, result.size());
         Assertions.assertEquals(orderDto, result.get(0));
+
+        log.info("Finished testGetOrdersByCustomerIdFound successfully");
     }
 
     @Test
     void testGetOrdersByCustomerIdCustomerNotFound() {
         OrderDto orderDto = getDummyOrderDto();
 
+        log.info("Starting testGetOrdersByCustomerIdCustomerNotFound");
+
         Mockito.when(customerRepository.findById(Mockito.anyLong())).thenReturn(Optional.empty());
 
         Assertions.assertThrows(CustomerNotFoundException.class, () -> orderService.getOrdersByCustomerId(orderDto.getCustomerId()));
+        log.error("Customer with given ID was not found");
+
+        log.info("Finished testGetOrdersByCustomerIdCustomerNotFound successfully");
     }
 
     @Test
@@ -105,13 +132,18 @@ public class OrderServiceUnitTest {
         Order order = getDummyOrder();
         OrderDto orderDto = getDummyOrderDto();
 
+        log.info("Starting testGetOrdersByStatus");
+
         Mockito.when(orderRepository.findByStatus(Mockito.any())).thenReturn(Collections.singletonList(order));
         Mockito.when(orderMapper.orderToOrderDto(order)).thenReturn(orderDto);
 
         List<OrderDto> result = orderService.gelOrdersByStatus(order.getStatus());
+        log.info(String.valueOf(order.getOrderId()));
 
         Assertions.assertEquals(1, result.size());
         Assertions.assertEquals(orderDto, result.get(0));
+
+        log.info("Finished testGetOrdersByStatus successfully");
     }
 
     @Test
@@ -119,23 +151,33 @@ public class OrderServiceUnitTest {
         Order order = getDummyOrder();
         OrderDto orderDto = getDummyOrderDto();
 
+        log.info("Starting testCompleteOrderFound");
+
         Mockito.when(orderRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(order));
         Mockito.when(orderRepository.save(Mockito.any())).thenReturn(order);
         Mockito.when(orderMapper.orderToOrderDto(order)).thenReturn(orderDto);
 
         OrderDto result = orderService.completeOrder(order.getOrderId());
+        log.info(String.valueOf(result.getOrderId()));
 
         Assertions.assertNotNull(result);
         Assertions.assertEquals(OrderStatusEnum.COMPLETED, order.getStatus());
+
+        log.info("Finished testCompleteOrderFound successfully");
     }
 
     @Test
     void testCompleteOrderNotFound() {
         Order order = getDummyOrder();
 
+        log.info("Starting testCompleteOrderNotFound");
+
         Mockito.when(orderRepository.findById(Mockito.anyLong())).thenReturn(Optional.empty());
 
         Assertions.assertThrows(OrderNotFoundException.class, () -> orderService.completeOrder(order.getOrderId()));
+        log.error("Order with given ID was not found");
+
+        log.info("Finished testCompleteOrderNotFound successfully");
     }
 
     @Test
@@ -143,23 +185,33 @@ public class OrderServiceUnitTest {
         Order order = getDummyOrder();
         OrderDto orderDto = getDummyOrderDto();
 
+        log.info("Starting testModifyTotalAmountFound");
+
         Mockito.when(orderRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(order));
         Mockito.when(orderRepository.save(Mockito.any())).thenReturn(order);
         Mockito.when(orderMapper.orderToOrderDto(order)).thenReturn(orderDto);
 
         OrderDto result = orderService.modifyTotalAmount(order.getOrderId(), BigDecimal.valueOf(10));
+        log.info(String.valueOf(result.getOrderId()));
 
         Assertions.assertNotNull(result);
         Assertions.assertEquals(BigDecimal.valueOf(10), order.getTotalAmount());
+
+        log.info("Finished testModifyTotalAmountFound successfully");
     }
 
     @Test
     void testModifyTotalAmountNotFound() {
         Order order = getDummyOrder();
 
+        log.info("Starting testModifyTotalAmountNotFound");
+
         Mockito.when(orderRepository.findById(Mockito.anyLong())).thenReturn(Optional.empty());
 
         Assertions.assertThrows(OrderNotFoundException.class, () -> orderService.modifyTotalAmount(order.getOrderId(), BigDecimal.TEN));
+        log.error("Order with given ID was not found");
+
+        log.info("Finished testModifyTotalAmountNotFound successfully");
     }
 
     @Test
@@ -167,33 +219,48 @@ public class OrderServiceUnitTest {
         Order order = getDummyOrder();
         OrderDto orderDto = getDummyOrderDto();
 
+        log.info("Starting testSaveOrder");
+
         Mockito.when(orderRepository.findByCustomerCustomerIdAndStatus(Mockito.anyLong(), Mockito.any())).thenReturn(Collections.emptyList());
         Mockito.when(customerRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(order.getCustomer()));
         Mockito.when(orderRepository.save(Mockito.any())).thenReturn(order);
         Mockito.when(orderMapper.orderToOrderDto(order)).thenReturn(orderDto);
 
         OrderDto result = orderService.saveOrder(order.getOrderId());
+        log.info(String.valueOf(result.getOrderId()));
 
         Assertions.assertNotNull(result);
+
+        log.info("Finished testSaveOrder successfully");
     }
 
     @Test
     void testSaveOrderInProgressFound() {
         Order order = getDummyOrder();
 
+        log.info("Starting testSaveOrderInProgressFound");
+
         Mockito.when(orderRepository.findByCustomerCustomerIdAndStatus(Mockito.anyLong(), Mockito.any())).thenReturn(Collections.singletonList(getDummyOrder()));
 
         Assertions.assertThrows(OrderInProgressException.class, () -> orderService.saveOrder(order.getOrderId()));
+        log.error("An order with the given ID is already in progress");
+
+        log.info("Finished testSaveOrderInProgressFound successfully");
     }
 
     @Test
     void testSaveOrderCustomerNotFound() {
         Order order = getDummyOrder();
 
+        log.info("Starting testSaveOrderCustomerNotFound");
+
         Mockito.when(orderRepository.findByCustomerCustomerIdAndStatus(Mockito.anyLong(), Mockito.any())).thenReturn(Collections.emptyList());
         Mockito.when(customerRepository.findById(Mockito.anyLong())).thenReturn(Optional.empty());
 
         Assertions.assertThrows(CustomerNotFoundException.class, () -> orderService.saveOrder(order.getOrderId()));
+        log.error("Customer with given ID was not found");
+
+        log.info("Finished testSaveOrderCustomerNotFound successfully");
     }
 
     @Test
@@ -201,46 +268,66 @@ public class OrderServiceUnitTest {
         Order order = getDummyOrder();
         OrderDto orderDto = getDummyOrderDto();
 
+        log.info("Starting testUpdateOrderFound");
+
         Mockito.when(orderRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(order));
         Mockito.when(customerRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(order.getCustomer()));
         Mockito.when(orderRepository.save(Mockito.any())).thenReturn(order);
         Mockito.when(orderMapper.orderToOrderDto(order)).thenReturn(orderDto);
 
         OrderDto result = orderService.updateOrder(order.getOrderId(), order.getOrderId());
+        log.info(String.valueOf(result.getOrderId()));
 
         Assertions.assertNotNull(result);
         Assertions.assertEquals(order.getOrderId(), order.getCustomer().getCustomerId());
 
         Mockito.verify(orderMapper).orderToOrderDto(order);
+
+        log.info("Finished testUpdateOrderFound successfully");
     }
 
     @Test
     void testUpdateOrderNotFound() {
         Order order = getDummyOrder();
 
+        log.info("Starting testUpdateOrderNotFound");
+
         Mockito.when(orderRepository.findById(Mockito.anyLong())).thenReturn(Optional.empty());
 
         Assertions.assertThrows(OrderNotFoundException.class, () -> orderService.updateOrder(order.getOrderId(), order.getOrderId()));
+        log.error("Order with given ID was not found");
+
+        log.info("Finished testUpdateOrderNotFound successfully");
     }
 
     @Test
     void testRemoveOrderByIdFound() {
         Order order = getDummyOrder();
 
+        log.info("Starting testRemoveOrderByIdFound");
+
         Mockito.when(orderRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(order));
 
         Assertions.assertDoesNotThrow(() -> orderService.removeOrderById(order.getOrderId()));
+        log.info(String.valueOf(order.getOrderId()));
 
         Mockito.verify(orderRepository, Mockito.times(1)).deleteById(Mockito.anyLong());
+
+        log.info("Finished testRemoveOrderByIdFound successfully");
     }
 
     @Test
     void testRemoveOrderByIdNotFound() {
         Order order = getDummyOrder();
 
+        log.info("Starting testRemoveOrderByIdNotFound");
+
         Mockito.when(orderRepository.findById(Mockito.anyLong())).thenReturn(Optional.empty());
 
         Assertions.assertThrows(OrderNotFoundException.class, () -> orderService.removeOrderById(order.getOrderId()));
+        log.error("Order with given ID was not found");
+
+        log.info("Finished testRemoveOrderByIdNotFound successfully");
     }
 
     private Order getDummyOrder(){

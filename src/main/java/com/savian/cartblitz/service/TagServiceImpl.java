@@ -67,9 +67,9 @@ public class TagServiceImpl implements TagService{
         if (existingTag.isPresent()) {
             throw new TagNameDuplicateException();
         } else {
-            Tag savedTag = tagRepository.save(tagMapper.tagDtoToTag(tagDto));
+            tagRepository.save(tagMapper.tagDtoToTag(tagDto));
             
-            return tagMapper.tagToTagDto(savedTag);
+            return tagDto;
         }
     }
 
@@ -86,8 +86,9 @@ public class TagServiceImpl implements TagService{
             Tag existingTag = optTag.get();
 
             existingTag.setName(tagDto.getName());
+            tagRepository.save(existingTag);
 
-            return tagMapper.tagToTagDto(tagRepository.save(existingTag));
+            return tagDto;
         }
         else{
             throw new TagNotFoundException(tagId);
