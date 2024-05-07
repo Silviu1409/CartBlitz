@@ -30,6 +30,7 @@ import java.util.Optional;
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("h2")
 @Slf4j
+@org.junit.jupiter.api.Tag("test")
 public class OrderServiceUnitTest {
     @InjectMocks
     private OrderServiceImpl orderService;

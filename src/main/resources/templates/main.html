@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>CartBlitz</title>
+
+    <script th:src="@{/webjars/jquery/jquery.min.js}"></script>
+    <script th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}"/>
+    <link rel="stylesheet" th:href="@{/webjars/font-awesome/css/all.min.css}"/>
+
+    <style>
+        main, footer {
+            text-align: center;
+        }
+
+        header nav ul {
+            padding: 0;
+            margin: 0;
+            list-style-type: none;
+        }
+
+        header nav ul li {
+            padding: 0 0 0 15px;
+            display: inline;
+        }
+    </style>
+</head>
+
+<body style="margin: 0; display: flex; flex-direction: column; min-height: 100vh;">
+
+<header style="padding-top: 25px;">
+    <div class="container">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid">
+                <a class="nav-link active" th:href="@{'/'}" style="padding: 10px;">
+                    <i class="fas fa-home mx-1"></i> Home
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/categories}">
+                                <i class="fas fa-computer"></i> PC Parts Categories
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/cart}">
+                                <i class="fas fa-shopping-cart"></i> Cart
+                            </a>
+                        </li>
+                    </ul>
+    <!--                <ul class="navbar-nav ms-auto topnav">-->
+    <!--                    <li th:if="${#authorization.expression('isAuthenticated()')}">-->
+    <!--                        <a class="nav-link btn-primary" th:href="@{/profile}">-->
+    <!--                            <i class="fas fa-sign-in-alt"></i> Profile-->
+    <!--                        </a>-->
+    <!--                    </li>-->
+    <!--                    <li th:unless="${#authorization.expression('isAuthenticated()')}">-->
+    <!--                        <a class="nav-link btn-primary" th:href="@{/login}">-->
+    <!--                            <i class="fas fa-sign-in-alt"></i> Sign In-->
+    <!--                        </a>-->
+    <!--                    </li>-->
+    <!--                    <li th:unless="${#authorization.expression('isAuthenticated()')}">-->
+    <!--                        <a class="nav-link btn-primary" th:href="@{/register}">-->
+    <!--                            <i class="fas fa-sign-in-alt"></i> Register-->
+    <!--                        </a>-->
+    <!--                    </li>-->
+    <!--                </ul>-->
+
+                </div>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<main style="flex: 1; padding-top: 50px;">
+    <h1>Welcome to CartBlitz!</h1>
+</main>
+
+<footer>
+    <p>&copy; 2024 CartBlitz</p>
+</footer>
+
+</body>
+</html>

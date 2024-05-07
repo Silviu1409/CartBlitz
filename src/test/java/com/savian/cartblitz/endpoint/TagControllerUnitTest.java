@@ -34,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("mysql")
+@org.junit.jupiter.api.Tag("test")
 public class TagControllerUnitTest {
     @Autowired
     private MockMvc mockMvc;

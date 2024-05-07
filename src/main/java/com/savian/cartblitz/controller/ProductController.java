@@ -1,7 +1,6 @@
 package com.savian.cartblitz.controller;
 
 import com.savian.cartblitz.dto.ProductDto;
-import com.savian.cartblitz.model.OrderProduct;
 import com.savian.cartblitz.model.Product;
 import com.savian.cartblitz.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -149,7 +148,6 @@ public class ProductController {
     }
 
     @PatchMapping
-    @GetMapping(produces = { MediaType.APPLICATION_JSON_VALUE })
     @Operation(description = "Update the stock quantity for a given product",
             summary = "Update stock quantity",
             responses = {

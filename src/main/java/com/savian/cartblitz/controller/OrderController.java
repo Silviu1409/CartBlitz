@@ -1,7 +1,6 @@
 package com.savian.cartblitz.controller;
 
 import com.savian.cartblitz.dto.OrderDto;
-import com.savian.cartblitz.model.Order;
 import com.savian.cartblitz.model.OrderStatusEnum;
 import com.savian.cartblitz.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;

@@ -27,6 +27,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("mysql")
+@org.junit.jupiter.api.Tag("test")
 public class CustomerControllerUnitTest {
     @Autowired
     private MockMvc mockMvc;
