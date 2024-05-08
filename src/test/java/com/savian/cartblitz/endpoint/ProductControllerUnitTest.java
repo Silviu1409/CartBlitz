@@ -90,12 +90,13 @@ public class ProductControllerUnitTest {
         when(productService.getProductsByCategory(category)).thenReturn(productDtoList);
 
         mockMvc.perform(get("/product/category/{category}", category)
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.TEXT_HTML))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.size()", is(productDtoList.size())))
-                .andExpect(jsonPath("$[0].name", is(productDtoList.get(0).getName())))
-                .andExpect(jsonPath("$[1].name", is(productDtoList.get(1).getName())));
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
+                .andExpect(content().string(containsString("<title>Products in CPU</title>"))) // Check title
+                .andExpect(content().string(containsString("<h2>Products in CPU</h2>"))) // Check page heading
+                .andExpect(content().string(containsString(productDtoList.get(0).getName()))) // Check product name
+                .andExpect(content().string(containsString(productDtoList.get(1).getName())));
     }
 
     @Test

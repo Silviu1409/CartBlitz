@@ -6,10 +6,13 @@ import com.savian.cartblitz.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +21,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
-@RestController
+@Controller
 @Validated
 @RequestMapping("product")
 @Tag(name = "Products",description = "Endpoint manage Products")
@@ -71,23 +74,19 @@ public class ProductController {
         }
     }
 
-    @GetMapping(path = "/category/{category}", produces = { MediaType.APPLICATION_JSON_VALUE })
+    @GetMapping(path = "/category/{category}")
     @Operation(description = "Showing all info about products from the given category",
-            summary = "Showing products with from the given category",
-            responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
-            })
-    public ResponseEntity<List<ProductDto>> GetProductsByCategory(
-            @PathVariable
-            @Parameter(name = "category", description = "Product category", example = "CPU", required = true) String category){
-        return ResponseEntity.ok(productService.getProductsByCategory(category));
+            summary = "Showing products with from the given category")
+    @ApiResponses(value = {
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Not Found", responseCode = "404"),
+    })
+    public String GetProductsByCategory(
+            @PathVariable String category, Model model){
+        List<ProductDto> products = productService.getProductsByCategory(category);
+        model.addAttribute("products", products);
+        model.addAttribute("category", category);
+        return "products";
     }
 
     @GetMapping(path = "/brand/{brand}", produces = { MediaType.APPLICATION_JSON_VALUE })
