@@ -10,6 +10,8 @@ import com.savian.cartblitz.repository.TagRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -61,6 +63,48 @@ public class ProductServiceImpl implements ProductService{
         tagRepository.findById(tagId).orElseThrow(() -> new TagNotFoundException(tagId));
 
         return productRepository.findByTagsTagId(tagId).stream().map(productMapper::productToProductDto).toList();
+    }
+
+    @Override
+    public List<ProductDto> sortProducts(List<ProductDto> products, String sortBy, String sortOrder) {
+        Comparator<ProductDto> comparator;
+        switch (sortBy) {
+            case "brand":
+                comparator = Comparator.comparing(ProductDto::getBrand);
+                break;
+            case "name":
+                comparator = Comparator.comparing(ProductDto::getName);
+                break;
+            case "price":
+                comparator = Comparator.comparing(ProductDto::getPrice);
+                break;
+            default:
+                return products;
+        }
+
+        if (sortOrder.equals("desc")) {
+            comparator = comparator.reversed();
+        }
+
+        List<ProductDto> sortedProducts = new ArrayList<>(products);
+        sortedProducts.sort(comparator);
+
+        return sortedProducts;
+    }
+
+    @Override
+    public List<ProductDto> filterProductsMinPriceMaxPrice(List<ProductDto> products, BigDecimal minPrice, BigDecimal maxPrice) {
+        List<ProductDto> filteredProducts = new ArrayList<>();
+
+        for (ProductDto product : products) {
+            BigDecimal price = product.getPrice();
+
+            if (price.compareTo(minPrice) >= 0 && price.compareTo(maxPrice) <= 0) {
+                filteredProducts.add(product);
+            }
+        }
+
+        return filteredProducts;
     }
 
     @Override

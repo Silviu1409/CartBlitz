@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -82,10 +83,102 @@ public class ProductController {
                     @ApiResponse(description = "Not Found", responseCode = "404"),
     })
     public String GetProductsByCategory(
-            @PathVariable String category, Model model){
+            @PathVariable String category, HttpSession session, Model model){
         List<ProductDto> products = productService.getProductsByCategory(category);
+
+        session.setAttribute("products", products);
         model.addAttribute("products", products);
         model.addAttribute("category", category);
+
+        return "products";
+    }
+
+    @GetMapping(path = "/category/{category}/sort")
+    @Operation(description = "Sort products from the given category")
+    @ApiResponses(value = {
+            @ApiResponse(description = "Success", responseCode = "200"),
+            @ApiResponse(description = "Not Found", responseCode = "404"),
+    })
+    public String SortProductsByCategory(
+            @PathVariable String category,
+            @RequestParam String sortBy,
+            @RequestParam String sortOrder,
+            HttpSession session,
+            Model model) {
+        @SuppressWarnings("unchecked")
+        List<ProductDto> products = (List<ProductDto>) session.getAttribute("products");
+
+        if (products == null) {
+            return "redirect:/";
+        }
+
+        List<ProductDto> sortedProducts = productService.sortProducts(products, sortBy, sortOrder);
+
+        model.addAttribute("products", sortedProducts);
+        model.addAttribute("category", category);
+
+        return "products";
+    }
+
+    @GetMapping(path = "/category/{category}/filter")
+    @Operation(description = "Filter products from the given category by min price and max price")
+    @ApiResponses(value = {
+            @ApiResponse(description = "Success", responseCode = "200"),
+            @ApiResponse(description = "Not Found", responseCode = "404"),
+    })
+    public String FilterProductsFromCategoryByMinPriceMaxPrice(
+            @PathVariable String category,
+            @RequestParam String minPrice,
+            @RequestParam String maxPrice,
+            HttpSession session,
+            Model model) {
+        @SuppressWarnings("unchecked")
+        List<ProductDto> products = (List<ProductDto>) session.getAttribute("products");
+
+        if (products == null) {
+            return "redirect:/";
+        }
+
+        BigDecimal minPriceValue = BigDecimal.ZERO;
+        BigDecimal maxPriceValue = BigDecimal.valueOf(Double.MAX_VALUE);
+
+        if (minPrice != null && !minPrice.isEmpty()) {
+            try {
+                minPriceValue = new BigDecimal(minPrice);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        if (maxPrice != null && !maxPrice.isEmpty()) {
+            try {
+                maxPriceValue = new BigDecimal(maxPrice);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        List<ProductDto> sortedProducts = productService.filterProductsMinPriceMaxPrice(products, minPriceValue, maxPriceValue);
+
+        model.addAttribute("products", sortedProducts);
+        model.addAttribute("category", category);
+
+        return "products";
+    }
+
+    @GetMapping(path = "/sort")
+    @Operation(description = "Sort products")
+    @ApiResponses(value = {
+            @ApiResponse(description = "Success", responseCode = "200"),
+            @ApiResponse(description = "Not Found", responseCode = "404"),
+    })
+    public String SortProducts(
+            @PathVariable String sortBy,
+            @PathVariable String sortOrder,
+            Model model) {
+        @SuppressWarnings("unchecked")
+        List<ProductDto> products = (List<ProductDto>) model.getAttribute("products");
+
+        List<ProductDto> sortedProducts = productService.sortProducts(products, sortBy, sortOrder);
+
+        model.addAttribute("products", sortedProducts);
+
         return "products";
     }
 
