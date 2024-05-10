@@ -32,11 +32,24 @@
 
     <header style="padding-top: 25px;">
         <div class="container">
-            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <nav class="navbar navbar-expand-lg navbar-light bg-light" style="padding: 5px;">
                 <div class="container-fluid">
-                    <a class="nav-link active" th:href="@{'/'}" style="padding: 10px;">
-                        <i class="fas fa-home mx-1"></i> Acasă
-                    </a>
+                    <div class="d-flex align-items-center">
+                        <a class="nav-link active" th:href="@{'/'}">
+                            <i class="fas fa-home mx-1"></i> Acasă
+                        </a>
+
+                        <form class="form-inline" style="margin-left: 15px" id="searchForm">
+                            <div class="input-group">
+                                <input class="form-control form-control-sm" type="search" placeholder="Caută produse" aria-label="Caută" id="searchQuery">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-success" type="submit">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
 
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>

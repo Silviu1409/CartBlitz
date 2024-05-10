@@ -50,28 +50,25 @@ public class ProductController {
         return ResponseEntity.ok(productService.getAllProducts());
     }
 
-    @GetMapping(path = "/id/{productId}", produces = { MediaType.APPLICATION_JSON_VALUE })
+    @GetMapping(path = "/id/{productId}")
     @Operation(description = "Showing all info about a product with given id",
-            summary = "Showing product with given id",
-            responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
-            })
-    public ResponseEntity<Optional<Product>> GetProductById(
-            @PathVariable
-            @Parameter(name = "productId", description = "Product id", example = "1", required = true) Long productId){
+            summary = "Showing product with given id")
+    @ApiResponses(value = {
+            @ApiResponse(description = "Success", responseCode = "200"),
+            @ApiResponse(description = "Not Found", responseCode = "404"),
+    })
+    public String GetProductById(
+            @PathVariable Long productId, HttpSession session, Model model){
         Optional<Product> optionalProduct = productService.getProductById(productId);
 
         if (optionalProduct.isPresent()) {
-            return ResponseEntity.ok(optionalProduct);
+            Product product = optionalProduct.get();
+
+            model.addAttribute("product", product);
+
+            return "product";
         } else {
-            return ResponseEntity.notFound().build();
+            return "error";
         }
     }
 

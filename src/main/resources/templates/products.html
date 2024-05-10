@@ -7,7 +7,6 @@
 
     <script th:src="@{/webjars/jquery/jquery.min.js}"></script>
     <script th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
-<!--    <script th:src="@{/webjars/popper.js/umd/popper.js}"></script>-->
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}"/>
     <link rel="stylesheet" th:href="@{/webjars/font-awesome/css/all.min.css}"/>
 
@@ -180,10 +179,6 @@
                                 <ul>
                                     <li th:each="spec,iter : ${#strings.arraySplit(product.description, ',')}" th:if="${iter.index lt 4}" th:text="${spec}"></li>
                                 </ul>
-<!--                                <ul>-->
-<!--                                    <li th:each="spec : ${#strings.arraySplit(product.description, ',')}" th:text="${spec}"></li>-->
-<!--                                </ul>-->
-<!--                                <p class="card-text"><strong>În stoc:</strong> <span th:text="${product.stockQuantity}"></span></p>-->
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div>
                                         <p class="card-text"><strong>Preț:</strong> <span th:text="${product.price} + ' lei'"></span></p>
