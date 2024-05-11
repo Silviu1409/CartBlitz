@@ -80,7 +80,9 @@ public class ProductController {
                     @ApiResponse(description = "Not Found", responseCode = "404"),
     })
     public String GetProductsByCategory(
-            @PathVariable String category, HttpSession session, Model model){
+            @PathVariable String category,
+            HttpSession session,
+            Model model){
         List<ProductDto> products = productService.getProductsByCategory(category);
 
         session.setAttribute("products", products);
@@ -159,6 +161,24 @@ public class ProductController {
         return "products";
     }
 
+    @GetMapping(path = "/search")
+    @Operation(summary = "Search products", description = "Search for products based on the provided search query")
+    @ApiResponses(value = {
+            @ApiResponse(description = "Success", responseCode = "200"),
+            @ApiResponse(description = "Not Found", responseCode = "404")
+    })
+    public String searchProducts(
+            @RequestParam(name = "search") String searchQuery,
+            HttpSession session,
+            Model model) {
+        List<ProductDto> products = productService.searchProducts(searchQuery);
+
+        session.setAttribute("products", products);
+        model.addAttribute("products", products);
+
+        return "products";
+    }
+
     @GetMapping(path = "/sort")
     @Operation(description = "Sort products")
     @ApiResponses(value = {
@@ -166,13 +186,58 @@ public class ProductController {
             @ApiResponse(description = "Not Found", responseCode = "404"),
     })
     public String SortProducts(
-            @PathVariable String sortBy,
-            @PathVariable String sortOrder,
+            @RequestParam String sortBy,
+            @RequestParam String sortOrder,
+            HttpSession session,
             Model model) {
         @SuppressWarnings("unchecked")
-        List<ProductDto> products = (List<ProductDto>) model.getAttribute("products");
+        List<ProductDto> products = (List<ProductDto>) session.getAttribute("products");
+
+        if (products == null) {
+            return "redirect:/";
+        }
 
         List<ProductDto> sortedProducts = productService.sortProducts(products, sortBy, sortOrder);
+
+        model.addAttribute("products", sortedProducts);
+
+        return "products";
+    }
+
+    @GetMapping(path = "/filter")
+    @Operation(description = "Filter products from the given category by min price and max price")
+    @ApiResponses(value = {
+            @ApiResponse(description = "Success", responseCode = "200"),
+            @ApiResponse(description = "Not Found", responseCode = "404"),
+    })
+    public String FilterProductsByMinPriceMaxPrice(
+            @RequestParam String minPrice,
+            @RequestParam String maxPrice,
+            HttpSession session,
+            Model model) {
+        @SuppressWarnings("unchecked")
+        List<ProductDto> products = (List<ProductDto>) session.getAttribute("products");
+
+        if (products == null) {
+            return "redirect:/";
+        }
+
+        BigDecimal minPriceValue = BigDecimal.ZERO;
+        BigDecimal maxPriceValue = BigDecimal.valueOf(Double.MAX_VALUE);
+
+        if (minPrice != null && !minPrice.isEmpty()) {
+            try {
+                minPriceValue = new BigDecimal(minPrice);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        if (maxPrice != null && !maxPrice.isEmpty()) {
+            try {
+                maxPriceValue = new BigDecimal(maxPrice);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        List<ProductDto> sortedProducts = productService.filterProductsMinPriceMaxPrice(products, minPriceValue, maxPriceValue);
 
         model.addAttribute("products", sortedProducts);
 

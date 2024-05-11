@@ -11,18 +11,6 @@
     <link rel="stylesheet" th:href="@{/webjars/font-awesome/css/all.min.css}"/>
 
     <style>
-        .category-tile {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        .category-title {
-            font-weight: bold;
-        }
-        .category-image {
-            width: 200px;
-            height: auto;
-        }
-
         main, footer {
             text-align: center;
         }
@@ -37,6 +25,18 @@
             padding: 0 0 0 15px;
             display: inline;
         }
+
+        .category-tile {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .category-title {
+            font-weight: bold;
+        }
+        .category-image {
+            width: 200px;
+            height: auto;
+        }
     </style>
 </head>
 
@@ -44,11 +44,24 @@
 
     <header style="padding-top: 25px;">
         <div class="container">
-            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <nav class="navbar navbar-expand-lg navbar-light bg-light" style="padding: 5px;">
                 <div class="container-fluid">
-                    <a class="nav-link" th:href="@{'/'}" style="padding: 10px;">
-                        <i class="fas fa-home mx-1"></i> Acasă
-                    </a>
+                    <div class="d-flex align-items-center">
+                        <a class="nav-link" th:href="@{'/'}">
+                            <i class="fas fa-home mx-1"></i> Acasă
+                        </a>
+
+                        <form class="form-inline" style="margin-left: 15px" id="searchForm">
+                            <div class="input-group">
+                                <input class="form-control form-control-sm" type="search" placeholder="Caută produse" aria-label="Caută" id="searchQuery">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-success" type="submit">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
 
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
@@ -114,6 +127,19 @@
     <footer style="padding-top: 25px;">
         <p>&copy; 2024 CartBlitz</p>
     </footer>
+
+    <script>
+        document.getElementById("searchForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            var searchQuery = document.getElementById("searchQuery").value;
+            var searchUrl = "/product/search?search=" + encodeURIComponent(searchQuery);
+
+            localStorage.setItem("searchQuery", searchUrl);
+
+            window.location.href = searchUrl;
+        });
+    </script>
 
 </body>
 

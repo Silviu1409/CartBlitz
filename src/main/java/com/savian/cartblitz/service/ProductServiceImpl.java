@@ -10,10 +10,8 @@ import com.savian.cartblitz.repository.TagRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductServiceImpl implements ProductService{
@@ -105,6 +103,24 @@ public class ProductServiceImpl implements ProductService{
         }
 
         return filteredProducts;
+    }
+
+    @Override
+    public List<ProductDto> searchProducts(String search) {
+        List<Product> byBrand = productRepository.findByBrandContainingIgnoreCase(search);
+        List<Product> byCategory = productRepository.findByCategoryContainingIgnoreCase(search);
+        List<Product> byDescription = productRepository.findByDescriptionContainingIgnoreCase(search);
+        List<Product> byName = productRepository.findByNameContainingIgnoreCase(search);
+
+        Set<Product> resultSet = new HashSet<>();
+        resultSet.addAll(byBrand);
+        resultSet.addAll(byCategory);
+        resultSet.addAll(byDescription);
+        resultSet.addAll(byName);
+
+        return resultSet.stream()
+                .map(productMapper::productToProductDto)
+                .collect(Collectors.toList());
     }
 
     @Override

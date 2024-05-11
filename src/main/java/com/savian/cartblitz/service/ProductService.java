@@ -17,6 +17,7 @@ public interface ProductService {
     List<ProductDto> getProductsByTagId(Long tagId);
     List<ProductDto> sortProducts(List<ProductDto> products, String sortBy, String sortOrder);
     List<ProductDto> filterProductsMinPriceMaxPrice(List<ProductDto> products, BigDecimal minPrice, BigDecimal maxPrice);
+    List<ProductDto> searchProducts(String search);
     Product updateStockQuantity(Long productId, Integer stockQuantity);
 
     Product saveProduct(ProductDto productDto);

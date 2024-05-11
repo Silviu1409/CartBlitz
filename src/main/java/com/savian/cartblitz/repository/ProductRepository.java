@@ -13,4 +13,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByCategoryIgnoreCase(String category);
     List<Product> findByBrandIgnoreCase(String brand);
     List<Product> findByPriceBetween(BigDecimal minPrice, BigDecimal maxPrice);
+
+    List<Product> findByBrandContainingIgnoreCase(String brand);
+    List<Product> findByCategoryContainingIgnoreCase(String category);
+    List<Product> findByDescriptionContainingIgnoreCase(String description);
+    List<Product> findByNameContainingIgnoreCase(String name);
+    List<Product> findByTagsNameIgnoreCase(String tag);
 }
