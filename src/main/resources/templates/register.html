@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ro" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+
+    <script th:src="@{/webjars/jquery/jquery.min.js}"></script>
+    <script th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}"/>
+    <link rel="stylesheet" th:href="@{/webjars/font-awesome/css/all.min.css}"/>
+</head>
+
+<body>
+
+    <div class="container" style="margin-top: 20px">
+
+        <div class="col-md-6 col-md-offset-3">
+            <form class="form-signin" method="post" th:action="@{/register}"  th:object="${customer}">
+                <h2 class="form-signin-heading">Înregistrează-te</h2>
+                <input th:field="*{customerId}" type="hidden"/>
+                <br/>
+<!--                <p th:if="${param.error}" class="text-danger">Invalid user or password</p>-->
+                <br/>
+                <div class="form-row">
+                    <label th:if="${#fields.hasErrors('username')}" th:errors="*{username}">Eroare</label>
+                    <input type="text" id="username" name="username" th:field="*{username}" class="form-control" placeholder="Username" required autofocus>
+                </div>
+                <br/>
+                <div class="form-row">
+                    <label th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Eroare</label>
+                    <input type="password" id="password" name="password" th:field="*{password}" class="form-control" placeholder="Parolă" required>
+                </div>
+                <br/>
+                <div class="form-row">
+                    <label th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Eroare</label>
+                    <input type="email" id="email" name="email" th:field="*{email}" class="form-control" placeholder="Email" required>
+                </div>
+                <br/>
+                <div class="form-row">
+                    <label th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}">Eroare</label>
+                    <input type="text" id="fullName" name="fullName" th:field="*{fullName}" class="form-control" placeholder="Nume" required>
+                </div>
+                <br/>
+                <button class="btn btn-lg btn-primary btn-block" type="submit">Înregistrează-te</button>
+                <hr class="my-4">
+                <small class="text-muted">Dacă ai deja un cont, <a href="/login">intră în cont</a>.</small>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

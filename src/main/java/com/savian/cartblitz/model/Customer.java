@@ -1,16 +1,19 @@
 package com.savian.cartblitz.model;
 
-import com.savian.cartblitz.model.security.User;
+import com.savian.cartblitz.model.security.Authority;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Setter
 @Getter
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Table(name = "customer")
 public class Customer {
     @Id
@@ -29,17 +32,25 @@ public class Customer {
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Order> orders;
 
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Review> reviews;
 
-    @OneToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    @Singular
+    @ManyToMany(cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
+    @JoinTable(name = "customer_authority", joinColumns = {@JoinColumn(name = "CUSTOMER_ID", referencedColumnName = "customerId")}, inverseJoinColumns = {@JoinColumn(name = "AUTHORITY_ID", referencedColumnName = "ID")})
+    private Set<Authority> authorities;
 
-    public Customer() {}
+    @Builder.Default
+    private Boolean accountNonExpired = true;
+    @Builder.Default
+    private Boolean accountNonLocked = true;
+    @Builder.Default
+    private Boolean credentialsNonExpired = true;
+    @Builder.Default
+    private Boolean enabled = true;
 
     @Override
     public boolean equals(Object o) {
@@ -64,7 +75,16 @@ public class Customer {
                 ", fullName='" + fullName + '\'' +
                 ", orders=" + orders +
                 ", reviews=" + reviews +
-                ", user=" + user +
+                '}';
+    }
+
+    public String toStringLogin() {
+        return "Customer{" +
+                "customerId=" + customerId +
+                ", username='" + username + '\'' +
+                ", password='" + password + '\'' +
+                ", email='" + email + '\'' +
+                ", fullName='" + fullName + '\'' +
                 '}';
     }
 }

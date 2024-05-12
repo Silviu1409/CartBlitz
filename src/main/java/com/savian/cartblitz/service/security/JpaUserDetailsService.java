@@ -1,8 +1,8 @@
 package com.savian.cartblitz.service.security;
 
+import com.savian.cartblitz.model.Customer;
 import com.savian.cartblitz.model.security.Authority;
-import com.savian.cartblitz.model.security.User;
-import com.savian.cartblitz.repository.security.UserRepository;
+import com.savian.cartblitz.repository.CustomerRepository;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.*;
@@ -23,19 +23,19 @@ import java.util.stream.Collectors;
 @Profile("mysql")
 public class JpaUserDetailsService implements UserDetailsService {
 
-    private final UserRepository userRepository;
+    private final CustomerRepository customerRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user;
+        Customer user;
 
-        Optional<User> userOpt= userRepository.findByUsername(username);
+        Optional<Customer> userOpt= customerRepository.findByUsername(username);
         if (userOpt.isPresent())
             user = userOpt.get();
         else
             throw new UsernameNotFoundException("Username: " + username);
 
-        log.info(user.toString());
+        log.info(user.toStringLogin());
 
         return new org.springframework.security.core.userdetails.User(user.getUsername(),
                 user.getPassword(),user.getEnabled(), user.getAccountNonExpired(),

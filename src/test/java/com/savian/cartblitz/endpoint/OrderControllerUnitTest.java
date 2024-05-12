@@ -101,7 +101,7 @@ public class OrderControllerUnitTest {
         OrderDto orderDtoTwo = getDummyOrderDtoTwo();
         List<OrderDto> orders = List.of(orderDtoOne, orderDtoTwo);
 
-        when(orderService.gelOrdersByStatus(OrderStatusEnum.CART)).thenReturn(orders);
+        when(orderService.getOrdersByStatus(OrderStatusEnum.CART)).thenReturn(orders);
 
         mockMvc.perform(get("/order/status/{status}", "CART")
                         .contentType(MediaType.APPLICATION_JSON))

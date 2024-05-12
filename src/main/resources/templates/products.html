@@ -207,20 +207,20 @@
                                 <ul>
                                     <li th:each="spec,iter : ${#strings.arraySplit(product.description, ',')}" th:if="${iter.index lt 4}" th:text="${spec}"></li>
                                 </ul>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <div>
-                                        <p class="card-text"><strong>Preț:</strong> <span th:text="${product.price} + ' lei'"></span></p>
-                                    </div>
-                                    <button class="btn btn-success" th:if="${product.stockQuantity > 0}" th:href="@{'/product/id/' + ${product.productId}}">
-                                        <i class="fas fa-cart-plus mr-1"></i> Adaugă în coș
-                                    </button>
-                                    <button class="btn btn-secondary" th:if="${product.stockQuantity == 0}" disabled>
-                                        <i class="fas fa-cart-plus mr-1"></i> Nu se află în stoc
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     </a>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <p class="card-text"><strong>Preț:</strong> <span th:text="${product.price} + ' lei'"></span></p>
+                        </div>
+                        <button class="btn btn-success" th:if="${product.stockQuantity > 0}" th:attr="data-product-id=${product.productId}" onclick="addToCart(this)">
+                            <i class="fas fa-cart-plus mr-1"></i> Adaugă în coș
+                        </button>
+                        <button class="btn btn-secondary" th:if="${product.stockQuantity == 0}" disabled>
+                            <i class="fas fa-cart-plus mr-1"></i> Nu se află în stoc
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -352,6 +352,13 @@
 
             window.location.href = searchUrl;
         });
+    </script>
+
+    <script th:inline="javascript">
+        function addToCart(button) {
+            var productId = button.getAttribute('data-product-id');
+            window.location.href = '/product/add-to-cart/' + productId;
+        }
     </script>
 
 </body>

@@ -9,10 +9,12 @@ import com.savian.cartblitz.model.*;
 import com.savian.cartblitz.repository.CustomerRepository;
 import com.savian.cartblitz.repository.OrderRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,15 +48,29 @@ public class OrderServiceImpl implements OrderService{
     }
 
     @Override
+    @Transactional
     public List<OrderDto> getOrdersByCustomerId(Long customerId) {
+        /*
         customerRepository.findById(customerId).orElseThrow(() -> new CustomerNotFoundException(customerId));
 
         return orderRepository.findByCustomerCustomerId(customerId).stream().map(orderMapper::orderToOrderDto).toList();
+        */
+        Customer customer = customerRepository.findById(customerId).orElse(null);
+        if (customer != null) {
+            List<Order> orders = customer.getOrders();
+            return orders.stream().map(orderMapper::orderToOrderDto).toList();
+        }
+        return Collections.emptyList();
     }
 
     @Override
-    public List<OrderDto> gelOrdersByStatus(OrderStatusEnum status) {
+    public List<OrderDto> getOrdersByStatus(OrderStatusEnum status) {
         return orderRepository.findByStatus(status).stream().map(orderMapper::orderToOrderDto).toList();
+    }
+
+    @Override
+    public List<OrderDto> getOrdersByCustomerIdAndStatus(Long customerId, OrderStatusEnum status) {
+        return orderRepository.findByCustomerCustomerIdAndStatus(customerId, status).stream().map(orderMapper::orderToOrderDto).toList();
     }
 
     @Override
@@ -110,6 +126,11 @@ public class OrderServiceImpl implements OrderService{
         else {
             throw new OrderInProgressException();
         }
+    }
+
+    @Override
+    public void saveOrUpdateOrder(OrderDto orderDto) {
+        orderRepository.save(orderMapper.orderDtoToOrder(orderDto));
     }
 
     @Override

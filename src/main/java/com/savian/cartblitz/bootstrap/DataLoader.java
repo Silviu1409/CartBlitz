@@ -1,9 +1,9 @@
 package com.savian.cartblitz.bootstrap;
 
+import com.savian.cartblitz.model.Customer;
 import com.savian.cartblitz.model.security.Authority;
-import com.savian.cartblitz.model.security.User;
+import com.savian.cartblitz.repository.CustomerRepository;
 import com.savian.cartblitz.repository.security.AuthorityRepository;
-import com.savian.cartblitz.repository.security.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,21 +16,23 @@ import lombok.AllArgsConstructor;
 public class DataLoader implements CommandLineRunner {
 
     private AuthorityRepository authorityRepository;
-    private UserRepository userRepository;
+    private CustomerRepository customerRepository;
     private PasswordEncoder passwordEncoder;
 
     private void loadUserData() {
-        if (userRepository.count() == 0){
+        if (customerRepository.count() == 0){
             Authority adminRole = authorityRepository.save(Authority.builder().role("ROLE_ADMIN").build());
             authorityRepository.save(Authority.builder().role("ROLE_USER").build());
 
-            User admin = User.builder()
+            Customer admin = Customer.builder()
                     .username("admin")
                     .password(passwordEncoder.encode("12345"))
+                    .email("admin")
+                    .fullName("admin")
                     .authority(adminRole)
                     .build();
 
-            userRepository.save(admin);
+            customerRepository.save(admin);
         }
     }
 

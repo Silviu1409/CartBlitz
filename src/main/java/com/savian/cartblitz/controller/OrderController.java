@@ -10,8 +10,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,7 +22,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
-@RestController
+@Controller
 @Validated
 @RequestMapping("order")
 @Tag(name = "Orders",description = "Endpoint manage Orders")
@@ -105,25 +107,22 @@ public class OrderController {
             })
     public ResponseEntity<List<OrderDto>> GetOrdersByStatus(
             @PathVariable @Parameter(name = "status", description = "Status", required = true) OrderStatusEnum status){
-        return ResponseEntity.ok(orderService.gelOrdersByStatus(status));
+        return ResponseEntity.ok(orderService.getOrdersByStatus(status));
     }
 
-    @GetMapping(path = "/complete/{orderId}", produces = { MediaType.APPLICATION_JSON_VALUE })
-    @Operation(description = "Complete an order with the given id",
-            summary = "Complete order with given id",
+    @PostMapping(path = "/complete/{orderId}")
+    @Operation(description = "Complete an order with the given ID and redirect to the home page",
+            summary = "Complete order with given ID",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Order completed successfully", responseCode = "200"),
+                    @ApiResponse(description = "Order not found", responseCode = "404")
             })
-    public ResponseEntity<OrderDto> CompleteOrder(
-            @PathVariable @Parameter(name = "orderId", description = "Order id", example = "1", required = true) Long orderId){
-        return ResponseEntity.ok(orderService.completeOrder(orderId));
+    public ResponseEntity<Void> completeOrder(@PathVariable Long orderId) {
+        orderService.completeOrder(orderId);
+
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create("/"))
+                .build();
     }
 
     @GetMapping(path = "/modify{amount}", produces = { MediaType.APPLICATION_JSON_VALUE })

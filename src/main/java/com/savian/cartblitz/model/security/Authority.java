@@ -1,5 +1,6 @@
 package com.savian.cartblitz.model.security;
 
+import com.savian.cartblitz.model.Customer;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,5 +21,5 @@ public class Authority {
     private String role;
 
     @ManyToMany(mappedBy = "authorities")
-    private Set<User> users;
+    private Set<Customer> customers;
 }

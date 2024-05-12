@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ro" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Coș</title>
+
+    <script th:src="@{/webjars/jquery/jquery.min.js}"></script>
+    <script th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}"/>
+    <link rel="stylesheet" th:href="@{/webjars/font-awesome/css/all.min.css}"/>
+
+    <style>
+        main, footer {
+            text-align: center;
+        }
+
+        header nav ul {
+            padding: 0;
+            margin: 0;
+            list-style-type: none;
+        }
+
+        .navbar-nav li {
+            display: inline;
+        }
+
+        .navbar-nav li.visible{
+            padding-left: 10px;
+        }
+
+        .navbar-nav li.hidden {
+            padding: 0;
+            margin: 0;
+            display: none;
+        }
+
+    </style>
+</head>
+
+<body style="margin: 0; display: flex; flex-direction: column; min-height: 100vh;">
+    <header style="padding-top: 25px;">
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-light bg-light" style="padding: 5px;">
+                <div class="container-fluid">
+                    <a class="nav-link active" th:href="@{'/'}">
+                        <i class="fas fa-home mx-1"></i> Acasă
+                    </a>
+
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+
+                        <ul class="navbar-nav">
+                            <li class="visible">
+                                <a class="nav-link" th:href="@{/categories}">
+                                    <i class="fas fa-computer"></i> Categorii piese PC
+                                </a>
+                            </li>
+                            <li th:if="${#authorization.expression('isAuthenticated()')}" th:class="${#authorization.expression('hasRole(''USER'')')} ? 'visible' : 'hidden'">
+                                <a class="nav-link" th:href="@{/cart}" sec:authorize="hasRole('USER')">
+                                    <i class="fas fa-shopping-cart"></i> Coș
+                                </a>
+                            </li>
+                            <li th:unless="${#authorization.expression('isAuthenticated()')}" th:class="${#authorization.expression('isAuthenticated()')} ? 'hidden' : 'visible'">
+                                <a class="nav-link btn-primary" th:href="@{/login}">
+                                    <i class="fas fa-sign-in-alt"></i> Intră în cont
+                                </a>
+                            </li>
+                            <li th:unless="${#authorization.expression('isAuthenticated()')}" th:class="${#authorization.expression('isAuthenticated()')} ? 'hidden' : 'visible'">
+                                <a class="nav-link btn-primary" th:href="@{/register}">
+                                    <i class="fas fa-user-plus"></i> Înregistrează-te
+                                </a>
+                            </li>
+                            <li th:if="${#authorization.expression('isAuthenticated()')}" th:class="${#authorization.expression('hasRole(''USER'')')} ? 'visible' : 'hidden'">
+                                <a class="nav-link btn-primary" th:href="@{/profile}" sec:authorize="hasRole('USER')">
+                                    <i class="fas fa-user"></i> Profil
+                                </a>
+                            </li>
+                            <li th:if="${#authorization.expression('isAuthenticated()')}" th:class="${#authorization.expression('isAuthenticated()')} ? 'visible' : 'hidden'">
+                                <form id="logout-form" th:action="@{/logout}" sec:authorize="hasAnyRole('USER', 'ADMIN')" method="post">
+                                    <button type="submit" class="nav-link btn-primary">
+                                        <i class="fas fa-sign-out-alt"></i> Ieși din cont
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main style="flex: 1; padding-top: 50px;">
+        <div class="container">
+            <h2 class="mt-5">Coșul tău de cumpărături</h2>
+
+            <div th:if="${cartOrder != null}">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Nume produs</th>
+                        <th>Cantitate</th>
+                        <th>Preț</th>
+                        <th>Cost total</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="orderProduct : ${cartOrder.orderProducts}">
+                        <td th:text="${orderProduct.product.name}"></td>
+                        <td th:text="${orderProduct.quantity}"></td>
+                        <td th:text="${orderProduct.price}"></td>
+                        <td th:text="${orderProduct.price * orderProduct.quantity}"></td>
+                    </tr>
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <td colspan="3" class="text-right">Total comandă:</td>
+                        <td th:text="${cartOrder.totalAmount} + ' lei'"></td>
+                    </tr>
+                    </tfoot>
+                </table>
+                <br/>
+                <form th:action="@{'/order/complete/' + ${cartOrder.orderId}}" method="post">
+                    <button type="submit" class="btn btn-primary">Plasează comanda</button>
+                </form>
+            </div>
+        </div>
+
+        <div th:if="${cartOrder == null}" class="alert alert-info mt-3" role="alert">
+            Coșul tău de cumpărături este gol. Adaugă produse în coș.
+        </div>
+    </main>
+
+    <script>
+        document.getElementById("searchForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            var searchQuery = document.getElementById("searchQuery").value;
+            var searchUrl = "/product/search?search=" + encodeURIComponent(searchQuery);
+
+            localStorage.setItem("searchQuery", searchUrl);
+
+            window.location.href = searchUrl;
+        });
+    </script>
+</body>
+</html>

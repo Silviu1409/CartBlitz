@@ -138,7 +138,7 @@ public class OrderServiceUnitTest {
         Mockito.when(orderRepository.findByStatus(Mockito.any())).thenReturn(Collections.singletonList(order));
         Mockito.when(orderMapper.orderToOrderDto(order)).thenReturn(orderDto);
 
-        List<OrderDto> result = orderService.gelOrdersByStatus(order.getStatus());
+        List<OrderDto> result = orderService.getOrdersByStatus(order.getStatus());
         log.info(String.valueOf(order.getOrderId()));
 
         Assertions.assertEquals(1, result.size());

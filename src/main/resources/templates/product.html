@@ -185,7 +185,7 @@
                     <br/>
                     <p> <strong>În stoc: </strong> <span th:text="${product.stockQuantity}"></span> </p>
                     <br/>
-                    <button class="btn btn-success" th:if="${product.stockQuantity > 0}" th:href="@{'/product/id/' + ${product.productId}}">
+                    <button class="btn btn-success" th:if="${product.stockQuantity > 0}" th:attr="data-product-id=${product.productId}" onclick="addToCart(this)">
                         <i class="fas fa-cart-plus mr-1"></i> Adaugă în coș
                     </button>
                     <button class="btn btn-secondary" th:if="${product.stockQuantity == 0}" disabled>
@@ -322,6 +322,13 @@
 
             window.location.href = searchUrl;
         });
+    </script>
+
+    <script th:inline="javascript">
+        function addToCart(button) {
+            var productId = button.getAttribute('data-product-id');
+            window.location.href = '/product/add-to-cart/' + productId;
+        }
     </script>
 
 </body>

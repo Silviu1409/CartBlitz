@@ -6,15 +6,18 @@ import com.savian.cartblitz.exception.ProductNotFoundException;
 import com.savian.cartblitz.exception.ReviewNotFoundException;
 import com.savian.cartblitz.mapper.ReviewMapper;
 import com.savian.cartblitz.model.Customer;
+import com.savian.cartblitz.model.Order;
 import com.savian.cartblitz.model.Product;
 import com.savian.cartblitz.model.Review;
 import com.savian.cartblitz.repository.CustomerRepository;
 import com.savian.cartblitz.repository.ProductRepository;
 import com.savian.cartblitz.repository.ReviewRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -49,10 +52,19 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     @Override
+    @Transactional
     public List<ReviewDto> getReviewsByCustomerId(Long customerId) {
+        /*
         customerRepository.findById(customerId).orElseThrow(() -> new CustomerNotFoundException(customerId));
 
         return reviewRepository.findByCustomerCustomerId(customerId).stream().map(reviewMapper::reviewToReviewDto).toList();
+        */
+        Customer customer = customerRepository.findById(customerId).orElse(null);
+        if (customer != null) {
+            List<Review> reviews = customer.getReviews();
+            return reviews.stream().map(reviewMapper::reviewToReviewDto).toList();
+        }
+        return Collections.emptyList();
     }
 
     @Override

@@ -1,7 +1,13 @@
 package com.savian.cartblitz.controller;
 
+import com.savian.cartblitz.dto.OrderDto;
+import com.savian.cartblitz.dto.OrderProductDto;
 import com.savian.cartblitz.dto.ProductDto;
-import com.savian.cartblitz.model.Product;
+import com.savian.cartblitz.model.*;
+import com.savian.cartblitz.repository.OrderProductRepository;
+import com.savian.cartblitz.service.CustomerService;
+import com.savian.cartblitz.service.OrderProductService;
+import com.savian.cartblitz.service.OrderService;
 import com.savian.cartblitz.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -10,8 +16,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
@@ -19,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,10 +37,18 @@ import java.util.Optional;
 @RequestMapping("product")
 @Tag(name = "Products",description = "Endpoint manage Products")
 public class ProductController {
-    ProductService productService;
+    private ProductService productService;
+    private CustomerService customerService;
+    private OrderService orderService;
+    private OrderProductRepository orderProductRepository;
+    private OrderProductService orderProductService;
 
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService, CustomerService customerService, OrderService orderService, OrderProductRepository orderProductRepository, OrderProductService orderProductService) {
         this.productService = productService;
+        this.customerService = customerService;
+        this.orderService = orderService;
+        this.orderProductRepository = orderProductRepository;
+        this.orderProductService = orderProductService;
     }
 
     @GetMapping(produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -244,6 +262,53 @@ public class ProductController {
         return "products";
     }
 
+    @GetMapping("/add-to-cart/{productId}")
+    public ResponseEntity<String> addToCart(@PathVariable Long productId, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String username = userDetails.getUsername();
+
+        Optional<Customer> customer = customerService.getCustomerByUsername(username);
+
+        if (customer.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer not found");
+        }
+
+        Optional<Product> product = productService.getProductById(productId);
+        if (product.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product not found");
+        }
+
+        OrderDto shoppingCart = orderService.getOrdersByCustomerIdAndStatus(customer.get().getCustomerId(), OrderStatusEnum.CART).stream().findFirst().orElse(null);
+
+        if (shoppingCart == null) {
+            shoppingCart = orderService.saveOrder(customer.get().getCustomerId());
+        }
+
+        Optional<OrderProduct> orderProduct = orderProductRepository.findByOrderOrderIdAndProductProductId(shoppingCart.getOrderId(), productId);
+        if (orderProduct.isPresent()) {
+            orderProduct.get().setQuantity(orderProduct.get().getQuantity() + 1);
+            orderProduct.get().setPrice(orderProduct.get().getPrice().add(product.get().getPrice()));
+        } else {
+            Product existingProduct = productService.getProductById(productId).get();
+
+            OrderProductDto newOrderProduct = new OrderProductDto(shoppingCart.getOrderId(), existingProduct.getProductId(), 1, existingProduct.getPrice());
+            orderProductService.saveOrderProduct(newOrderProduct);
+            shoppingCart.setTotalAmount(product.get().getPrice());
+            shoppingCart.setOrderProducts(new ArrayList<>());
+            shoppingCart.getOrderProducts().add(newOrderProduct);
+        }
+
+        orderService.saveOrUpdateOrder(shoppingCart);
+
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create("/cart"))
+                .build();
+    }
+
     @GetMapping(path = "/brand/{brand}", produces = { MediaType.APPLICATION_JSON_VALUE })
     @Operation(description = "Showing all info about products from the given brand",
             summary = "Showing products with from the given brand",
@@ -297,7 +362,7 @@ public class ProductController {
             })
     public ResponseEntity<List<ProductDto>> GetProductsByTagId(
             @PathVariable
-            @Parameter(name = "tagid", description = "Tag id", example = "1", required = true) Long tagId){
+            @Parameter(name = "tagId", description = "Tag id", example = "1", required = true) Long tagId){
         return ResponseEntity.ok(productService.getProductsByTagId(tagId));
     }
 

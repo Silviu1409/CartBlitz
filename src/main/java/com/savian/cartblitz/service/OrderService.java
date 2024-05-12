@@ -1,7 +1,6 @@
 package com.savian.cartblitz.service;
 
 import com.savian.cartblitz.dto.OrderDto;
-import com.savian.cartblitz.model.Order;
 import com.savian.cartblitz.model.OrderStatusEnum;
 
 import java.math.BigDecimal;
@@ -13,12 +12,14 @@ public interface OrderService {
     Optional<OrderDto> getOrderById(Long orderId);
 
     List<OrderDto> getOrdersByCustomerId(Long customerId);
-    List<OrderDto> gelOrdersByStatus(OrderStatusEnum status);
+    List<OrderDto> getOrdersByStatus(OrderStatusEnum status);
+    List<OrderDto> getOrdersByCustomerIdAndStatus(Long customerId, OrderStatusEnum status);
 
     OrderDto completeOrder(Long orderId);
     OrderDto modifyTotalAmount(Long orderId, BigDecimal amount);
 
     OrderDto saveOrder(Long customerId);
+    void saveOrUpdateOrder(OrderDto orderDto);
     OrderDto updateOrder(Long orderId, Long customerId);
     void removeOrderById(Long orderId);
 }
