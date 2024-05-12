@@ -1,5 +1,6 @@
 package com.savian.cartblitz.model;
 
+import com.savian.cartblitz.model.security.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,6 +35,10 @@ public class Customer {
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
     private List<Review> reviews;
 
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
     public Customer() {}
 
     @Override
@@ -59,6 +64,7 @@ public class Customer {
                 ", fullName='" + fullName + '\'' +
                 ", orders=" + orders +
                 ", reviews=" + reviews +
+                ", user=" + user +
                 '}';
     }
 }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ro" xmlns:th="http://www.thymeleaf.org">
+<html lang="ro" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
 
 <head>
     <meta charset="UTF-8">
@@ -21,9 +21,18 @@
             list-style-type: none;
         }
 
-        header nav ul li {
-            padding: 0 0 0 15px;
+        .navbar-nav li {
             display: inline;
+        }
+
+        .navbar-nav li.visible{
+            padding-left: 10px;
+        }
+
+        .navbar-nav li.hidden {
+            padding: 0;
+            margin: 0;
+            display: none;
         }
 
         .carousel-control-prev-icon,
@@ -84,35 +93,39 @@
                     <div class="collapse navbar-collapse" id="navbarSupportedContent">
 
                         <ul class="navbar-nav">
-                            <li class="nav-item">
+                            <li class="visible">
                                 <a class="nav-link" th:href="@{/categories}">
                                     <i class="fas fa-computer"></i> Categorii piese PC
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" th:href="@{/cart}">
+                            <li th:if="${#authorization.expression('isAuthenticated()')}" th:class="${#authorization.expression('hasRole(''USER'')')} ? 'visible' : 'hidden'">
+                                <a class="nav-link" th:href="@{/cart}" sec:authorize="hasRole('USER')">
                                     <i class="fas fa-shopping-cart"></i> Coș
                                 </a>
                             </li>
+                            <li th:unless="${#authorization.expression('isAuthenticated()')}" th:class="${#authorization.expression('isAuthenticated()')} ? 'hidden' : 'visible'">
+                                <a class="nav-link btn-primary" th:href="@{/login}">
+                                    <i class="fas fa-sign-in-alt"></i> Intră în cont
+                                </a>
+                            </li>
+                            <li th:unless="${#authorization.expression('isAuthenticated()')}" th:class="${#authorization.expression('isAuthenticated()')} ? 'hidden' : 'visible'">
+                                <a class="nav-link btn-primary" th:href="@{/register}">
+                                    <i class="fas fa-user-plus"></i> Înregistrează-te
+                                </a>
+                            </li>
+                            <li th:if="${#authorization.expression('isAuthenticated()')}" th:class="${#authorization.expression('hasRole(''USER'')')} ? 'visible' : 'hidden'">
+                                <a class="nav-link btn-primary" th:href="@{/profile}" sec:authorize="hasRole('USER')">
+                                    <i class="fas fa-user"></i> Profil
+                                </a>
+                            </li>
+                            <li th:if="${#authorization.expression('isAuthenticated()')}" th:class="${#authorization.expression('isAuthenticated()')} ? 'visible' : 'hidden'">
+                                <form id="logout-form" th:action="@{/logout}" sec:authorize="hasAnyRole('USER', 'ADMIN')" method="post">
+                                    <button type="submit" class="nav-link btn-primary">
+                                        <i class="fas fa-sign-out-alt"></i> Ieși din cont
+                                    </button>
+                                </form>
+                            </li>
                         </ul>
-                        <!--                <ul class="navbar-nav ms-auto topnav">-->
-                        <!--                    <li th:if="${#authorization.expression('isAuthenticated()')}">-->
-                        <!--                        <a class="nav-link btn-primary" th:href="@{/profile}">-->
-                        <!--                            <i class="fas fa-sign-in-alt"></i> Profil-->
-                        <!--                        </a>-->
-                        <!--                    </li>-->
-                        <!--                    <li th:unless="${#authorization.expression('isAuthenticated()')}">-->
-                        <!--                        <a class="nav-link btn-primary" th:href="@{/login}">-->
-                        <!--                            <i class="fas fa-sign-in-alt"></i> Intră în cont-->
-                        <!--                        </a>-->
-                        <!--                    </li>-->
-                        <!--                    <li th:unless="${#authorization.expression('isAuthenticated()')}">-->
-                        <!--                        <a class="nav-link btn-primary" th:href="@{/register}">-->
-                        <!--                            <i class="fas fa-sign-in-alt"></i> Înregistrează-te-->
-                        <!--                        </a>-->
-                        <!--                    </li>-->
-                        <!--                </ul>-->
-
                     </div>
                 </div>
             </nav>

@@ -45,5 +45,7 @@ public class CustomerDto {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private List<ReviewDto> reviews;
 
+    private Long userId;
+
     public CustomerDto() {}
 }

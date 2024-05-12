@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ro" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+
+    <script th:src="@{/webjars/jquery/jquery.min.js}"></script>
+    <script th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}"/>
+    <link rel="stylesheet" th:href="@{/webjars/font-awesome/css/all.min.css}"/>
+</head>
+
+<body>
+    <div class="container" style="margin-top: 20px">
+        <div class="col-md-6 col-md-offset-3">
+            <form class="form-signin" method="post" th:action="perform_login">
+                <h2 class="form-signin-heading">Intră în cont</h2>
+                <br/>
+                <p th:if="${param.error}" class="text-danger">Invalid user or password</p>
+                <label for="username" class="sr-only">Username</label>
+                <input type="text" id="username" name="username" class="form-control" placeholder="Username" required autofocus>
+                <br/>
+                <p>
+                    <label for="password" class="sr-only">Parolă</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Password" required>
+                </p>
+                <br/>
+                <button class="btn btn-lg btn-primary btn-block" type="submit">Intră în cont</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
