@@ -34,6 +34,9 @@
             display: none;
         }
 
+        .vertical-center {
+            vertical-align: middle;
+        }
     </style>
 </head>
 
@@ -42,9 +45,22 @@
         <div class="container">
             <nav class="navbar navbar-expand-lg navbar-light bg-light" style="padding: 5px;">
                 <div class="container-fluid">
-                    <a class="nav-link active" th:href="@{'/'}">
-                        <i class="fas fa-home mx-1"></i> Acasă
-                    </a>
+                    <div class="d-flex align-items-center">
+                        <a class="nav-link" th:href="@{'/'}">
+                            <i class="fas fa-home mx-1"></i> Acasă
+                        </a>
+
+                        <form class="form-inline" style="margin-left: 15px" id="searchForm">
+                            <div class="input-group">
+                                <input class="form-control form-control-sm" type="search" placeholder="Caută produse" aria-label="Caută" id="searchQuery">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-success" type="submit">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
 
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
@@ -97,35 +113,70 @@
         <div class="container">
             <h2 class="mt-5">Coșul tău de cumpărături</h2>
 
+            <br/>
+            <br/>
+
             <div th:if="${cartOrder != null}">
-                <table class="table table-striped">
+                <table class="table table-striped" style="background-color: transparent;">
                     <thead>
-                    <tr>
-                        <th>Nume produs</th>
-                        <th>Cantitate</th>
-                        <th>Preț</th>
-                        <th>Cost total</th>
-                    </tr>
+                        <tr>
+                            <th>Nume produs</th>
+                            <th>Cantitate</th>
+                            <th>Preț</th>
+                            <th>Cost total</th>
+                            <th></th>
+                        </tr>
                     </thead>
                     <tbody>
-                    <tr th:each="orderProduct : ${cartOrder.orderProducts}">
-                        <td th:text="${orderProduct.product.name}"></td>
-                        <td th:text="${orderProduct.quantity}"></td>
-                        <td th:text="${orderProduct.price}"></td>
-                        <td th:text="${orderProduct.price * orderProduct.quantity}"></td>
-                    </tr>
+                        <tr th:each="orderProduct : ${cartOrder.orderProducts}">
+                            <td class="vertical-center">
+                                <img th:src="@{'/images/products/' + ${orderProduct.product.category.toLowerCase()} + '/' + ${orderProduct.product.productId} + '_1.jpg'}" alt="Product Thumbnail" style="max-width: 50px; max-height: 50px; margin-right: 15px;"/>
+                                <a th:href="@{'/product/id/' + ${orderProduct.product.productId}}" th:text="${orderProduct.product.name}" style="color: inherit;"></a>
+                            </td>
+                            <td class="vertical-center">
+                                <a th:href="@{'/orderProduct/' + ${orderProduct.quantity - 1} + '/orderId/' + ${cartOrder.orderId} + '/productId/' + ${orderProduct.product.productId}}" class="btn btn-primary">
+                                    <i class="fas fa-minus"></i>
+                                </a>
+                                <span style="margin-left: 5px; margin-right: 5px;" th:text="${orderProduct.quantity}"></span>
+                                <a th:href="@{'/orderProduct/' + ${orderProduct.quantity + 1} + '/orderId/' + ${cartOrder.orderId} + '/productId/' + ${orderProduct.product.productId}}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i>
+                                </a>
+                            </td>
+                            <td class="vertical-center" th:text="${orderProduct.product.price}"></td>
+                            <td class="vertical-center" th:text="${orderProduct.price}"></td>
+                            <td class="vertical-center">
+                                <a th:href="@{'/orderProduct/delete/orderId/' + ${cartOrder.orderId} + '/productId/' + ${orderProduct.product.productId}}" class="btn btn-danger">
+                                    <i class="fas fa-xmark"></i> Șterge
+                                </a>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td colspan="4"></td>
+                        </tr>
+
+                        <tr th:each="entry : ${errorMessagesMap}">
+                            <th:block th:with="productId=${entry.key.productId}">
+                                <td colspan="4" th:if="${entry.value}" class="alert alert-danger" role="alert">
+                                    <span th:text="${entry.value}"></span>
+                                </td>
+                            </th:block>
+                        </tr>
                     </tbody>
-                    <tfoot>
-                    <tr>
-                        <td colspan="3" class="text-right">Total comandă:</td>
-                        <td th:text="${cartOrder.totalAmount} + ' lei'"></td>
-                    </tr>
-                    </tfoot>
                 </table>
+                <div th:if="${errorProductQuantity}" class="alert alert-danger mt-3" id="errorMessage" role="alert">
+                    <span th:text="${errorProductQuantity}"></span>
+                </div>
                 <br/>
-                <form th:action="@{'/order/complete/' + ${cartOrder.orderId}}" method="post">
-                    <button type="submit" class="btn btn-primary">Plasează comanda</button>
-                </form>
+                <div class="text-right">
+                    <h4><strong>Total comandă: </strong><span th:text="${cartOrder.totalAmount} + ' lei'"></span></h4>
+                </div>
+                <br/>
+                <th:block th:if="${errorMessagesMap.empty}">
+                    <form th:action="@{'/order/complete/' + ${cartOrder.orderId}}" method="post">
+                        <button type="submit" class="btn btn-primary">Plasează comanda</button>
+                    </form>
+                </th:block>
             </div>
         </div>
 
@@ -145,6 +196,16 @@
 
             window.location.href = searchUrl;
         });
+    </script>
+
+    <script th:inline="javascript">
+        setTimeout(function() {
+            var errorMessage = document.getElementById('errorMessage');
+
+            if (errorMessage) {
+                errorMessage.style.display = 'none';
+            }
+        }, 10000);
     </script>
 </body>
 </html>

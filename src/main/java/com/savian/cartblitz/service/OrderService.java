@@ -21,5 +21,6 @@ public interface OrderService {
     OrderDto saveOrder(Long customerId);
     void saveOrUpdateOrder(OrderDto orderDto);
     OrderDto updateOrder(Long orderId, Long customerId);
+    OrderDto updateTotalAmount(Long orderId, BigDecimal amount);
     void removeOrderById(Long orderId);
 }

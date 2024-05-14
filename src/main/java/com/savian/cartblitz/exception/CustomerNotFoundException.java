@@ -5,7 +5,7 @@ public class CustomerNotFoundException extends RuntimeException{
         super("Customer with id " + customerId + " doesn't exist in the db.");
     }
 
-    public CustomerNotFoundException(String username) {
-        super("Customer with username " + username + " doesn't exist in the db.");
+    public CustomerNotFoundException(String field, String val) {
+        super("Customer with " + field + " " + val + " doesn't exist in the db.");
     }
 }

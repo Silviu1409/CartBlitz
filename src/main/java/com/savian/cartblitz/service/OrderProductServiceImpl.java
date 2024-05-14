@@ -72,7 +72,6 @@ public class OrderProductServiceImpl implements OrderProductService{
             throw new ProductQuantityException(product.getProductId(), product.getStockQuantity());
         }
         else {
-            productService.updateStockQuantity(product.getProductId(), product.getStockQuantity() - orderProductDto.getQuantity());
             orderService.modifyTotalAmount(order.getOrderId(), BigDecimal.valueOf(orderProductDto.getQuantity()).multiply(product.getPrice()));
 
             OrderProduct orderProduct = new OrderProduct();
@@ -103,17 +102,13 @@ public class OrderProductServiceImpl implements OrderProductService{
                 throw new ProductQuantityException(product.getProductId(), product.getStockQuantity());
             }
             else {
-                productService.updateStockQuantity(prevOrderProduct.getProduct().getProductId(), prevOrderProduct.getProduct().getStockQuantity() + prevOrderProduct.getQuantity());
                 orderService.modifyTotalAmount(prevOrderProduct.getOrder().getOrderId(), BigDecimal.valueOf(prevOrderProduct.getQuantity()).multiply(prevOrderProduct.getPrice()).negate());
 
                 prevOrderProduct.setOrderProductId(new OrderProductId(order.getOrderId(), product.getProductId()));
                 prevOrderProduct.setOrder(order);
                 prevOrderProduct.setProduct(product);
-
                 prevOrderProduct.setQuantity(orderProductDto.getQuantity());
-                productService.updateStockQuantity(product.getProductId(), product.getStockQuantity() - orderProductDto.getQuantity());
-
-                prevOrderProduct.setPrice(product.getPrice());
+                prevOrderProduct.setPrice(BigDecimal.valueOf(orderProductDto.getQuantity()).multiply(product.getPrice()));
 
                 orderService.modifyTotalAmount(order.getOrderId(), BigDecimal.valueOf(orderProductDto.getQuantity()).multiply(product.getPrice()));
 
@@ -132,7 +127,6 @@ public class OrderProductServiceImpl implements OrderProductService{
         if(optOrderProduct.isPresent()){
             OrderProduct orderProduct = optOrderProduct.get();
 
-            productService.updateStockQuantity(orderProduct.getProduct().getProductId(), orderProduct.getProduct().getStockQuantity() + orderProduct.getQuantity());
             orderService.modifyTotalAmount(orderProduct.getOrder().getOrderId(), BigDecimal.valueOf(orderProduct.getQuantity()).multiply(orderProduct.getPrice()).negate());
 
             orderProductRepository.deleteByOrderIdAndProductId(orderId, productId);

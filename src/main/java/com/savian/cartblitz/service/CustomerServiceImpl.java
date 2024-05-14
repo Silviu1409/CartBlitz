@@ -1,6 +1,7 @@
 package com.savian.cartblitz.service;
 
 import com.savian.cartblitz.dto.CustomerDto;
+import com.savian.cartblitz.exception.CustomerEmailDuplicateException;
 import com.savian.cartblitz.exception.CustomerNotFoundException;
 import com.savian.cartblitz.exception.CustomerUsernameDuplicateException;
 import com.savian.cartblitz.mapper.CustomerMapper;
@@ -45,7 +46,18 @@ public class CustomerServiceImpl implements CustomerService{
             return customer;
         }
         else {
-            throw new CustomerNotFoundException(username);
+            throw new CustomerNotFoundException("username", username);
+        }
+    }
+
+    @Override
+    public Optional<Customer> getCustomerByEmail(String email) {
+        Optional<Customer> customer = customerRepository.findByEmail(email);
+        if (customer.isPresent()) {
+            return customer;
+        }
+        else {
+            throw new CustomerNotFoundException("email", email);
         }
     }
 
@@ -66,7 +78,13 @@ public class CustomerServiceImpl implements CustomerService{
         if (existingCustomer.isPresent()) {
             throw new CustomerUsernameDuplicateException();
         } else {
-            return customerRepository.save(customerMapper.customerDtoToCustomer(customerDto));
+            existingCustomer = customerRepository.findByEmail(customerDto.getEmail());
+
+            if (existingCustomer.isPresent()) {
+                throw new CustomerEmailDuplicateException();
+            } else {
+                return customerRepository.save(customerMapper.customerDtoToCustomer(customerDto));
+            }
         }
     }
 
@@ -76,8 +94,15 @@ public class CustomerServiceImpl implements CustomerService{
 
         if (optCustomer.isPresent()) {
             Optional<Customer> duplicateCustomer = customerRepository.findByUsername(updatedCustomer.getUsername());
+
             if (duplicateCustomer.isPresent() && !Objects.equals(duplicateCustomer.get().getCustomerId(), customerId)) {
                 throw new CustomerUsernameDuplicateException();
+            }
+
+            duplicateCustomer = customerRepository.findByEmail(updatedCustomer.getEmail());
+
+            if (duplicateCustomer.isPresent() && !Objects.equals(duplicateCustomer.get().getCustomerId(), customerId)) {
+                throw new CustomerEmailDuplicateException();
             }
 
             Customer existingCustomer = optCustomer.get();

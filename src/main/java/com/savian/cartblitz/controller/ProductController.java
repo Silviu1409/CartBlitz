@@ -106,6 +106,7 @@ public class ProductController {
         session.setAttribute("products", products);
         model.addAttribute("products", products);
         model.addAttribute("category", category);
+        model.addAttribute("categoryReadable", getReadableCategory(category));
 
         return "products";
     }
@@ -133,6 +134,7 @@ public class ProductController {
 
         model.addAttribute("products", sortedProducts);
         model.addAttribute("category", category);
+        model.addAttribute("categoryReadable", getReadableCategory(category));
 
         return "products";
     }
@@ -175,6 +177,7 @@ public class ProductController {
 
         model.addAttribute("products", sortedProducts);
         model.addAttribute("category", category);
+        model.addAttribute("categoryReadable", getReadableCategory(category));
 
         return "products";
     }
@@ -293,9 +296,7 @@ public class ProductController {
             orderProduct.get().setQuantity(orderProduct.get().getQuantity() + 1);
             orderProduct.get().setPrice(orderProduct.get().getPrice().add(product.get().getPrice()));
         } else {
-            Product existingProduct = productService.getProductById(productId).get();
-
-            OrderProductDto newOrderProduct = new OrderProductDto(shoppingCart.getOrderId(), existingProduct.getProductId(), 1, existingProduct.getPrice());
+            OrderProductDto newOrderProduct = new OrderProductDto(shoppingCart.getOrderId(), productId, 1, product.get().getPrice());
             orderProductService.saveOrderProduct(newOrderProduct);
             shoppingCart.setTotalAmount(product.get().getPrice());
             shoppingCart.setOrderProducts(new ArrayList<>());
@@ -449,5 +450,17 @@ public class ProductController {
             })
     public void DeleteProduct(@PathVariable @Parameter(name = "productId",description = "Product id",example = "1",required = true) Long productId) {
         productService.removeProductById(productId);
+    }
+
+    public String getReadableCategory(String category){
+        return switch (category.toLowerCase()) {
+            case "cpu" -> "Procesoare";
+            case "gpu" -> "Plăci video";
+            case "mdb" -> "Plăci de baza";
+            case "psu" -> "Surse";
+            case "ram" -> "Memorii RAM";
+            case "ssd" -> "SSD-uri";
+            default -> "Alte produse";
+        };
     }
 }

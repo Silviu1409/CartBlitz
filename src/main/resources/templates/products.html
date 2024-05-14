@@ -3,8 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <title th:if="${category != null}" th:text="'Produse în ' + ${category}"></title>
-    <title th:unless="${category != null}">Rezultatele căutării</title>
+    <title th:if="${categoryReadable != null}" th:text="${categoryReadable}"></title>
+    <title th:unless="${categoryReadable != null}">Rezultatele căutării</title>
 
     <script th:src="@{/webjars/jquery/jquery.min.js}"></script>
     <script th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
@@ -140,8 +140,8 @@
 
     <main style="flex: 1; padding-top: 50px;">
         <div class="container" th:unless="${#lists.isEmpty(products)}">
-            <h2 class="text-center" th:if="${category != null}" th:text="'Produse în ' + ${category}"></h2>
-            <h2 class="text-center" th:unless="${category != null}">Rezultatele căutării</h2>
+            <h2 class="text-center" th:if="${categoryReadable != null}" th:text="${categoryReadable}"></h2>
+            <h2 class="text-center" th:unless="${categoryReadable != null}">Rezultatele căutării</h2>
             <br/>
             <br/>
             <div class="filter-and-sort">
@@ -214,12 +214,14 @@
                         <div>
                             <p class="card-text"><strong>Preț:</strong> <span th:text="${product.price} + ' lei'"></span></p>
                         </div>
-                        <button class="btn btn-success" th:if="${product.stockQuantity > 0}" th:attr="data-product-id=${product.productId}" onclick="addToCart(this)">
-                            <i class="fas fa-cart-plus mr-1"></i> Adaugă în coș
-                        </button>
-                        <button class="btn btn-secondary" th:if="${product.stockQuantity == 0}" disabled>
-                            <i class="fas fa-cart-plus mr-1"></i> Nu se află în stoc
-                        </button>
+                        <div th:if="${#authorization.expression('hasRole(''USER'')')}">
+                            <button class="btn btn-success" th:if="${product.stockQuantity > 0}" th:attr="data-product-id=${product.productId}" onclick="addToCart(this)">
+                                <i class="fas fa-cart-plus mr-1"></i> Adaugă în coș
+                            </button>
+                            <button class="btn btn-secondary" th:if="${product.stockQuantity == 0}" disabled>
+                                <i class="fas fa-cart-plus mr-1"></i> Nu se află în stoc
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

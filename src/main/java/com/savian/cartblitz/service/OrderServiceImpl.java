@@ -8,6 +8,7 @@ import com.savian.cartblitz.mapper.OrderMapper;
 import com.savian.cartblitz.model.*;
 import com.savian.cartblitz.repository.CustomerRepository;
 import com.savian.cartblitz.repository.OrderRepository;
+import com.savian.cartblitz.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,11 +23,13 @@ import java.util.Optional;
 public class OrderServiceImpl implements OrderService{
     private final OrderRepository orderRepository;
     private final CustomerRepository customerRepository;
+    private final ProductRepository productRepository;
     private final OrderMapper orderMapper;
 
-    public OrderServiceImpl(OrderRepository orderRepository, CustomerRepository customerRepository, OrderMapper orderMapper) {
+    public OrderServiceImpl(OrderRepository orderRepository, CustomerRepository customerRepository, ProductRepository productRepository, OrderMapper orderMapper) {
         this.orderRepository = orderRepository;
         this.customerRepository = customerRepository;
+        this.productRepository = productRepository;
         this.orderMapper = orderMapper;
     }
 
@@ -78,6 +81,14 @@ public class OrderServiceImpl implements OrderService{
         Optional<Order> optOrder = orderRepository.findById(orderId);
         if (optOrder.isPresent()){
             Order prevOrder = optOrder.get();
+
+            for(OrderProduct orderProduct: prevOrder.getOrderProducts()){
+                Product product = orderProduct.getProduct();
+                Integer quantity = orderProduct.getQuantity();
+
+                product.setStockQuantity(Math.max(product.getStockQuantity() - quantity, 0));
+                productRepository.save(product);
+            }
 
             prevOrder.setStatus(OrderStatusEnum.COMPLETED);
             prevOrder.setOrderDate(Timestamp.valueOf(LocalDateTime.now()));
@@ -143,6 +154,23 @@ public class OrderServiceImpl implements OrderService{
                     .orElseThrow(() -> new CustomerNotFoundException(customerId));
 
             prevOrder.setCustomer(customer);
+            prevOrder.setOrderDate(Timestamp.valueOf(LocalDateTime.now()));
+
+            Order savedOrder = orderRepository.save(prevOrder);
+            return orderMapper.orderToOrderDto(savedOrder);
+        }
+        else{
+            throw new OrderNotFoundException(orderId);
+        }
+    }
+
+    @Override
+    public OrderDto updateTotalAmount(Long orderId, BigDecimal amount) {
+        Optional<Order> optOrder = orderRepository.findById(orderId);
+        if (optOrder.isPresent()){
+            Order prevOrder = optOrder.get();
+
+            prevOrder.setTotalAmount(amount);
             prevOrder.setOrderDate(Timestamp.valueOf(LocalDateTime.now()));
 
             Order savedOrder = orderRepository.save(prevOrder);

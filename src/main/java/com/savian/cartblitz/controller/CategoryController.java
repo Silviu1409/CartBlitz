@@ -22,8 +22,8 @@ public class CategoryController {
         Map<String, String> categories = new HashMap<>();
 
         categories.put("CPU", "Procesoare");
-        categories.put("GPU", "Placi video");
-        categories.put("MDB", "Placi de baza");
+        categories.put("GPU", "Plăci video");
+        categories.put("MDB", "Plăci de baza");
         categories.put("PSU", "Surse");
         categories.put("RAM", "Memorii RAM");
         categories.put("SSD", "SSD-uri");

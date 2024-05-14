@@ -4,6 +4,7 @@ import com.savian.cartblitz.model.security.Authority;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -33,10 +34,10 @@ public class Customer {
     private String fullName;
 
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<Order> orders;
+    private List<Order> orders = new ArrayList<>();
 
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<Review> reviews;
+    private List<Review> reviews = new ArrayList<>();
 
     @Singular
     @ManyToMany(cascade = CascadeType.MERGE, fetch = FetchType.EAGER)

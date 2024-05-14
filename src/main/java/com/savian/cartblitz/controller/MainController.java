@@ -1,13 +1,16 @@
 package com.savian.cartblitz.controller;
 
 import com.savian.cartblitz.dto.CustomerDto;
-import com.savian.cartblitz.model.Customer;
-import com.savian.cartblitz.model.Order;
-import com.savian.cartblitz.model.OrderStatusEnum;
+import com.savian.cartblitz.dto.OrderProductDto;
+import com.savian.cartblitz.model.*;
 import com.savian.cartblitz.model.security.Authority;
 import com.savian.cartblitz.repository.CustomerRepository;
+import com.savian.cartblitz.repository.ProductRepository;
 import com.savian.cartblitz.repository.security.AuthorityRepository;
+import com.savian.cartblitz.service.OrderProductService;
+import com.savian.cartblitz.service.OrderService;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
@@ -15,18 +18,26 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.security.Principal;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Controller
 public class MainController {
     @Autowired
     private CustomerRepository customerRepository;
     @Autowired
     private AuthorityRepository authorityRepository;
+    @Autowired
+    private ProductRepository productRepository;
+    @Autowired
+    private OrderProductService orderProductService;
+    @Autowired
+    private OrderService orderService;
 
     @RequestMapping({"","/","/home"})
     public ModelAndView getHome(){
@@ -45,13 +56,34 @@ public class MainController {
     }
 
     @PostMapping("/register")
-    public String processRegister(@Valid @ModelAttribute CustomerDto customer,
+    public String processRegister(@Valid @ModelAttribute("customer") CustomerDto customer,
                                BindingResult bindingResult,
                                Model model
     ){
+        log.info("register form for: {}", customer.getUsername());
 
         if (bindingResult.hasErrors()){
             model.addAttribute("customer", customer);
+            return "register";
+        }
+
+        Optional<Customer> existingCustomer = customerRepository.findByUsername(customer.getUsername());
+        if (existingCustomer.isPresent()) {
+            model.addAttribute("customer", customer);
+            model.addAttribute("registrationError", "Alege alt username");
+
+            log.warn("User name already exists.");
+
+            return "register";
+        }
+
+        existingCustomer = customerRepository.findByEmail(customer.getEmail());
+        if (existingCustomer.isPresent()) {
+            model.addAttribute("customer", customer);
+            model.addAttribute("registrationError", "Ai deja un cont creat cu această adresă de email");
+
+            log.warn("Email already exists.");
+
             return "register";
         }
 
@@ -68,6 +100,8 @@ public class MainController {
                 .authority(userRole)
                 .build();
         customerRepository.save(user);
+
+        log.info("registration successful for user: {}", customer.getUsername());
 
         return "redirect:/login" ;
     }
@@ -91,7 +125,7 @@ public class MainController {
     }
 
     @GetMapping("/cart")
-    public String viewCart(Model model, Principal principal) {
+    public String viewCart(Model model, Principal principal, RedirectAttributes redirectAttributes) {
         String username = principal.getName();
         Optional<Customer> optionalCustomer = customerRepository.findByUsername(username);
 
@@ -102,7 +136,53 @@ public class MainController {
                     .findFirst();
 
             Order cartOrder = cartOrderOptional.orElse(null);
+
+            if(cartOrder != null){
+                if(cartOrder.getOrderProducts().isEmpty()){
+                    orderService.removeOrderById(cartOrder.getOrderId());
+
+                    cartOrder = null;
+                }
+                else {
+                    BigDecimal actGrandTotal = cartOrder.getTotalAmount(), newGrandTotal = BigDecimal.ZERO;
+                    Map<OrderProductId, String> errorMessagesMap = new HashMap<>();
+
+                    for (OrderProduct orderProduct : cartOrder.getOrderProducts()) {
+                        BigDecimal productPrice = productRepository.getReferenceById(orderProduct.getProduct().getProductId()).getPrice();
+                        Integer productQuantity = orderProduct.getQuantity();
+                        BigDecimal totalPrice = BigDecimal.valueOf(productQuantity).multiply(productPrice);
+
+                        if (!Objects.equals(orderProduct.getPrice(), totalPrice)) {
+                            OrderProductDto orderProductDto = new OrderProductDto(cartOrder.getOrderId(), orderProduct.getProduct().getProductId(), orderProduct.getQuantity(), totalPrice);
+                            orderProductService.updateOrderProduct(cartOrder.getOrderId(), orderProduct.getProduct().getProductId(), orderProductDto);
+
+                            orderProduct.setPrice(totalPrice);
+                        }
+
+                        newGrandTotal = newGrandTotal.add(totalPrice);
+
+                        if (orderProduct.getQuantity() > orderProduct.getProduct().getStockQuantity()) {
+                            String errorMessage = "Nu sunt suficiente produse de tipul '" + orderProduct.getProduct().getName() + "' în stoc.";
+                            errorMessagesMap.put(orderProduct.getOrderProductId(), errorMessage);
+                        }
+                    }
+
+                    if (!Objects.equals(actGrandTotal, newGrandTotal)) {
+                        orderService.updateTotalAmount(cartOrder.getOrderId(), newGrandTotal);
+                    }
+
+                    model.addAttribute("errorMessagesMap", errorMessagesMap);
+                }
+            }
+
             model.addAttribute("cartOrder", cartOrder);
+
+            if (redirectAttributes.getFlashAttributes().containsKey("errorProductQuantity")) {
+                String errorProductQuantity = (String) redirectAttributes.getFlashAttributes().get("errorProductQuantity");
+
+                model.addAttribute("errorProductQuantity", errorProductQuantity);
+            }
+
             return "cart";
         } else {
             return "redirect:/";

@@ -13,29 +13,29 @@ public class CustomerDto {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Long customerId;
     
-    @NotNull(message = "Username is mandatory.")
-    @NotBlank(message = "Username must have a value.")
-    @Size(min = 5, max = 50, message = "Username must be between 5 and 50 characters long")
+    @NotNull(message = "Username-ul este obligatoriu.")
+    @NotBlank(message = "Username-ul trebuie să aibă o valoare.")
+    @Size(min = 5, max = 50, message = "Username trebuie să aibă între 5 și 50 de caractere.")
     private String username;
-    @NotNull(message = "Password is mandatory.")
-    @NotBlank(message = "Password must have a value.")
-    @Size(min = 8, max = 255, message = "Password must be between 8 and 255 characters long")
+    @NotNull(message = "Parola este obligatorie.")
+    @NotBlank(message = "Parola trebuie să aibă o valoare.")
+    @Size(min = 8, max = 255, message = "Parola trebuie să aibă între 8 și 255 de caractere.")
     @Pattern(
             regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$",
-            message = "Password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character"
+            message = "Parola trebuie să conțină cel puțin o literă minusculă, o literă majusculă, o cifră și un caracter special."
     )
     private String password;
-    @NotNull(message = "Email is mandatory.")
-    @NotBlank(message = "Email must have a value.")
-    @Size(max = 100, message = "Email address must not exceed 100 characters")
-    @Email(message = "Invalid email address")
+    @NotNull(message = "Email-ul este obligatoriu.")
+    @NotBlank(message = "Email-ul trebuie să aibă o valoare.")
+    @Size(max = 100, message = "Adresa de email nu trebuie să depășească 100 de caractere.")
+    @Email(message = "Adresa de email nu este validă.")
     private String email;
-    @NotNull(message = "Full name is mandatory.")
-    @NotBlank(message = "Full name must have a value.")
-    @Size(min = 3, max = 50, message = "Full name must be between 3 and 50 characters")
+    @NotNull(message = "Numele complet este obligatoriu.")
+    @NotBlank(message = "Numele complet trebuie să aibă o valoare.")
+    @Size(min = 3, max = 50, message = "Numele complet trebuie să aibă între 3 și 50 de caractere.")
     @Pattern(
             regexp = "^[a-zA-Z'\\-\\s]+$",
-            message = "Full name must contain only letters, spaces, apostrophes, and hyphens"
+            message = "Numele complet trebuie să conțină doar litere, spații, apostrofuri și cratime."
     )
     private String fullName;
 

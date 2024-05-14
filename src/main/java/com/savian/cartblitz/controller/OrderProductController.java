@@ -2,22 +2,26 @@ package com.savian.cartblitz.controller;
 
 import com.savian.cartblitz.dto.OrderProductDto;
 import com.savian.cartblitz.model.OrderProduct;
+import com.savian.cartblitz.model.Product;
 import com.savian.cartblitz.service.OrderProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
-@RestController
+@Controller
 @Validated
 @RequestMapping("orderProduct")
 @Tag(name = "OrderProducts",description = "Endpoint manage OrderProducts")
@@ -108,6 +112,38 @@ public class OrderProductController {
         return ResponseEntity.ok(orderProductService.getOrderProductsByProductId(productId));
     }
 
+    @RequestMapping("/{quantity}/orderId/{orderId}/productId/{productId}")
+    @Operation(description = "Update the quantity of an order product",
+            summary = "Update order product quantity")
+    @ApiResponses(value = {
+            @ApiResponse(description = "Success", responseCode = "200" ),
+            @ApiResponse(description = "OrderProduct Not Found", responseCode = "404"),
+    })
+    public String UpdateOrderProductQuantity(@PathVariable Integer quantity,
+                                             @PathVariable Long orderId,
+                                             @PathVariable Long productId,
+                                             RedirectAttributes redirectAttributes) {
+        if(quantity <= 0){
+            return DeleteOrderProductByOrderIdProductId(orderId, productId);
+        }
+
+        Optional<OrderProduct> existingOrderProduct = orderProductService.getOrderProductByOrderIdAndProductId(orderId, productId);
+
+        if(existingOrderProduct.isPresent()){
+            Product product = existingOrderProduct.get().getProduct();
+
+            if (quantity > product.getStockQuantity()) {
+                redirectAttributes.addFlashAttribute("errorProductQuantity", "Nu sunt suficiente produse de tipul '" + product.getName() + "' în stoc.");
+
+                return "redirect:/cart";
+            }
+        }
+
+        existingOrderProduct.ifPresent(orderProduct -> orderProductService.updateOrderProduct(orderId, productId, new OrderProductDto(orderId, productId, quantity, orderProduct.getPrice())));
+
+        return "redirect:/cart";
+    }
+
     @PostMapping(consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = {MediaType.APPLICATION_JSON_VALUE })
     @Operation(description = "Creating orderProduct - all info will be put in",
             summary = "Creating a new orderProduct",
@@ -170,5 +206,19 @@ public class OrderProductController {
     public void DeleteOrderProduct(@PathVariable @Parameter(name = "orderId",description = "Order id",example = "1",required = true) Long orderId,
                                    @PathVariable @Parameter(name = "productId",description = "Product id",example = "1",required = true) Long productId) {
         orderProductService.removeOrderProductById(orderId, productId);
+    }
+
+    @RequestMapping(path = "/delete/orderId/{orderId}/productId/{productId}")
+    @Operation(description = "Deleting a orderProduct with a given id",
+            summary = "Deleting a orderProduct with a given id")
+    @ApiResponses(value = {
+            @ApiResponse(description = "Success", responseCode = "200" ),
+            @ApiResponse(description = "OrderProduct Not Found", responseCode = "404"),
+    })
+    public String DeleteOrderProductByOrderIdProductId(@PathVariable Long orderId,
+                                                       @PathVariable Long productId) {
+        orderProductService.removeOrderProductById(orderId, productId);
+
+        return "redirect:/cart";
     }
 }
