@@ -6,6 +6,8 @@ import com.savian.cartblitz.model.*;
 import com.savian.cartblitz.model.security.Authority;
 import com.savian.cartblitz.repository.CustomerRepository;
 import com.savian.cartblitz.repository.ProductRepository;
+import com.savian.cartblitz.repository.TagRepository;
+import com.savian.cartblitz.repository.WarrantyRepository;
 import com.savian.cartblitz.repository.security.AuthorityRepository;
 import com.savian.cartblitz.service.OrderProductService;
 import com.savian.cartblitz.service.OrderService;
@@ -38,6 +40,10 @@ public class MainController {
     private OrderProductService orderProductService;
     @Autowired
     private OrderService orderService;
+    @Autowired
+    private WarrantyRepository warrantyRepository;
+    @Autowired
+    private TagRepository tagRepository;
 
     @RequestMapping({"","/","/home"})
     public ModelAndView getHome(){
@@ -103,7 +109,7 @@ public class MainController {
 
         log.info("registration successful for user: {}", customer.getUsername());
 
-        return "redirect:/login" ;
+        return "redirect:/login";
     }
 
     @GetMapping("/profile")
@@ -187,5 +193,54 @@ public class MainController {
         } else {
             return "redirect:/";
         }
+    }
+
+    @GetMapping("/addProduct")
+    public String showProductAdd(Model model) {
+        model.addAttribute("product", new Product());
+        return "productAdd";
+    }
+
+    @PostMapping("/addProduct")
+    public String processRegister(@Valid @ModelAttribute("product") Product product,
+                                  BindingResult bindingResult,
+                                  Model model
+    ) {
+        log.info("add product form for: {}", product.toString());
+
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("product", product);
+            return "productAdd";
+        }
+
+        Warranty warranty = product.getWarranty();
+
+        if(warranty != null){
+            warranty = warrantyRepository.save(product.getWarranty());
+
+            product.setWarranty(warranty);
+        }
+
+        Set<Tag> newTagsSet = new HashSet<>();
+
+        for (Tag tag : product.getTags()) {
+            tag.setName(tag.getName().toUpperCase());
+            Optional<Tag> existingTagOptional = tagRepository.findByName(tag.getName());
+            if (existingTagOptional.isPresent()) {
+                Tag existingTag = existingTagOptional.get();
+                newTagsSet.add(existingTag);
+            } else {
+                Tag savedTag = tagRepository.save(tag);
+                newTagsSet.add(savedTag);
+            }
+        }
+
+        product.setTags(newTagsSet.stream().toList());
+
+        Product savedProduct = productRepository.save(product);
+
+        log.info("added product successfully: {}", savedProduct);
+
+        return "redirect:/";
     }
 }

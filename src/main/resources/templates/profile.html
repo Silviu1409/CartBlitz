@@ -33,7 +33,6 @@
             margin: 0;
             display: none;
         }
-
     </style>
 </head>
 
@@ -79,6 +78,11 @@
                                     <i class="fas fa-user"></i> Profil
                                 </a>
                             </li>
+                            <li th:if="${#authorization.expression('isAuthenticated()')}" th:class="${#authorization.expression('hasRole(''ADMIN'')')} ? 'visible' : 'hidden'">
+                                <a class="nav-link btn-primary" th:href="@{/addProduct}" sec:authorize="hasRole('ADMIN')">
+                                    <i class="fas fa-plus"></i> Adaugă produs
+                                </a>
+                            </li>
                             <li th:if="${#authorization.expression('isAuthenticated()')}" th:class="${#authorization.expression('isAuthenticated()')} ? 'visible' : 'hidden'">
                                 <form id="logout-form" th:action="@{/logout}" sec:authorize="hasAnyRole('USER', 'ADMIN')" method="post">
                                     <button type="submit" class="nav-link btn-primary">
@@ -97,10 +101,16 @@
     <main style="flex: 1; padding-top: 50px;">
         <h2>Pagină de profil</h2>
         <br/>
+        <hr/>
+        <br/>
+        <h3>Detalii user: </h3>
+        <br/>
         <div th:object="${customer}">
             <h4><strong>Username: </strong><span th:text="*{username}"></span></h4>
             <h4><strong>Email: </strong><span th:text="*{email}"></span></h4>
             <h4><strong>Nume complet: </strong><span th:text="*{fullName}"></span></h4>
+            <br/>
+            <hr/>
             <br/>
             <h3>Listă de comenzi</h3>
             <br/>
@@ -112,7 +122,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="order : ${completedOrders}">
+                <tr th:each="order : ${completedOrders}" class="order-row" th:data-order-id="${order.orderId}" style="cursor: pointer; text-decoration: underline;">
                     <td class="text-center" th:text="${#dates.format(order.orderDate, 'dd/MM/yyyy HH:mm')}"></td>
                     <td class="text-center" th:text="${order.totalAmount} + ' lei'"></td>
                 </tr>
@@ -131,6 +141,18 @@
             localStorage.setItem("searchQuery", searchUrl);
 
             window.location.href = searchUrl;
+        });
+    </script>
+
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            var orderRows = document.querySelectorAll('.order-row');
+            orderRows.forEach(function(row) {
+                row.addEventListener('click', function() {
+                    var orderId = this.getAttribute('data-order-id');
+                    window.location.href = '/order/id/' + orderId;
+                });
+            });
         });
     </script>
 </body>

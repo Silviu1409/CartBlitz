@@ -9,6 +9,7 @@ import com.savian.cartblitz.repository.ProductRepository;
 import com.savian.cartblitz.repository.TagRepository;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -131,6 +132,34 @@ public class ProductServiceImpl implements ProductService{
             Product prevProduct = optProduct.get();
             prevProduct.setStockQuantity(Math.max(stockQuantity, 0));
             return productRepository.save(prevProduct);
+        }
+        else{
+            throw new ProductNotFoundException(productId);
+        }
+    }
+
+    @Override
+    public int getNumImagesForProduct(String category, Long productId) {
+        Optional<Product> optProduct = productRepository.findById(productId);
+
+        if (optProduct.isPresent()) {
+            String productDir = "src/main/resources/static/images/products/" + category + "/" + productId;
+
+            int numImages = 0;
+
+            while (true) {
+                String imagePath = productDir + "_" + (numImages + 1) + ".jpg";
+
+                File imageFile = new File(imagePath);
+                if (imageFile.exists()) {
+                    numImages++;
+                }
+                else {
+                    break;
+                }
+            }
+
+            return numImages;
         }
         else{
             throw new ProductNotFoundException(productId);

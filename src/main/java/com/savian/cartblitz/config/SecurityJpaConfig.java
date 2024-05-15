@@ -31,8 +31,8 @@ public class SecurityJpaConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         .requestMatchers("/", "/home", "/login", "/register", "/categories", "/product**", "/product/**", "/notFoundException", "/webjars/**", "/resources/**", "/images/**").permitAll()
-                        .requestMatchers("/cart", "/order/complete/**", "/product/add-to-cart/**", "/profile").hasAuthority("ROLE_USER")
-                        .requestMatchers("/product/add", "/review/add").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/cart", "/order/complete/**", "/product/add-to-cart/**", "/profile", "/review", "/order/**").hasAuthority("ROLE_USER")
+                        .requestMatchers("/addProduct").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
                 )
                 .userDetailsService(userDetailsService)

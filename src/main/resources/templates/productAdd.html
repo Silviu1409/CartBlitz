@@ -2,7 +2,7 @@
 <html lang="ro" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
-    <title>Coș</title>
+    <title>Adaugă produs</title>
 
     <script th:src="@{/webjars/jquery/jquery.min.js}"></script>
     <script th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
@@ -95,7 +95,7 @@
                                 </a>
                             </li>
                             <li th:if="${#authorization.expression('isAuthenticated()')}" th:class="${#authorization.expression('hasRole(''ADMIN'')')} ? 'visible' : 'hidden'">
-                                <a class="nav-link btn-primary" th:href="@{/addProduct}" sec:authorize="hasRole('ADMIN')">
+                                <a class="nav-link active btn-primary" th:href="@{/addProduct}" sec:authorize="hasRole('ADMIN')">
                                     <i class="fas fa-plus"></i> Adaugă produs
                                 </a>
                             </li>
@@ -116,79 +116,105 @@
 
     <main style="flex: 1; padding-top: 50px;">
         <div class="container">
-            <h2 class="mt-5">Coșul tău de cumpărături</h2>
-
+            <h2>Adaugă produs</h2>
             <br/>
-            <br/>
-
-            <div th:if="${cartOrder != null}">
-                <table class="table table-striped" style="background-color: transparent;">
-                    <thead>
-                        <tr>
-                            <th>Nume produs</th>
-                            <th>Cantitate</th>
-                            <th>Preț</th>
-                            <th>Cost total</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="orderProduct : ${cartOrder.orderProducts}">
-                            <td class="vertical-center">
-                                <img th:src="@{'/images/products/' + ${orderProduct.product.category.toLowerCase()} + '/' + ${orderProduct.product.productId} + '_1.jpg'}" alt="Product Thumbnail" style="max-width: 50px; max-height: 50px; margin-right: 15px;"/>
-                                <a th:href="@{'/product/id/' + ${orderProduct.product.productId}}" th:text="${orderProduct.product.name}" style="color: inherit;"></a>
-                            </td>
-                            <td class="vertical-center">
-                                <a th:href="@{'/orderProduct/' + ${orderProduct.quantity - 1} + '/orderId/' + ${cartOrder.orderId} + '/productId/' + ${orderProduct.product.productId}}" class="btn btn-primary">
-                                    <i class="fas fa-minus"></i>
-                                </a>
-                                <span style="margin-left: 5px; margin-right: 5px;" th:text="${orderProduct.quantity}"></span>
-                                <a th:href="@{'/orderProduct/' + ${orderProduct.quantity + 1} + '/orderId/' + ${cartOrder.orderId} + '/productId/' + ${orderProduct.product.productId}}" class="btn btn-primary">
-                                    <i class="fas fa-plus"></i>
-                                </a>
-                            </td>
-                            <td class="vertical-center" th:text="${orderProduct.product.price}"></td>
-                            <td class="vertical-center" th:text="${orderProduct.price}"></td>
-                            <td class="vertical-center">
-                                <a th:href="@{'/orderProduct/delete/orderId/' + ${cartOrder.orderId} + '/productId/' + ${orderProduct.product.productId}}" class="btn btn-danger">
-                                    <i class="fas fa-xmark"></i> Șterge
-                                </a>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td colspan="4"></td>
-                        </tr>
-
-                        <tr th:each="entry : ${errorMessagesMap}">
-                            <th:block th:with="productId=${entry.key.productId}">
-                                <td colspan="4" th:if="${entry.value}" class="alert alert-danger" role="alert">
-                                    <span th:text="${entry.value}"></span>
-                                </td>
-                            </th:block>
-                        </tr>
-                    </tbody>
-                </table>
-                <div th:if="${errorProductQuantity}" class="alert alert-danger mt-3" id="errorMessage" role="alert">
-                    <span th:text="${errorProductQuantity}"></span>
+            <form method="post" style="margin-left: auto; margin-right: auto; width: 35%;" th:action="@{/addProduct}"  th:object="${product}">
+                <input th:field="*{productId}" type="hidden"/>
+                <br/>
+                <p class="error-message" th:if="${registrationError}" th:text="${registrationError}"></p>
+                <br/>
+                <div class="form-row">
+                    <label th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="text-danger">Eroare</label>
+                    <input type="text" id="name" name="name" th:field="*{name}" class="form-control" placeholder="Nume" required>
                 </div>
                 <br/>
-                <div class="text-right">
-                    <h4><strong>Total comandă: </strong><span th:text="${cartOrder.totalAmount} + ' lei'"></span></h4>
+                <div class="form-row">
+                    <label th:if="${#fields.hasErrors('price')}" th:errors="*{price}" class="text-danger">Eroare</label>
+                    <input type="number" id="price" name="price" th:field="*{price}" class="form-control" placeholder="Preț" required>
                 </div>
                 <br/>
-                <th:block th:if="${errorMessagesMap.empty}">
-                    <form th:action="@{'/order/complete/' + ${cartOrder.orderId}}" method="post">
-                        <button type="submit" class="btn btn-primary">Plasează comanda</button>
-                    </form>
-                </th:block>
-            </div>
-        </div>
+                <div class="form-row">
+                    <label th:if="${#fields.hasErrors('stockQuantity')}" th:errors="*{stockQuantity}" class="text-danger">Eroare</label>
+                    <input type="number" id="stockQuantity" name="stockQuantity" th:field="*{stockQuantity}" class="form-control" placeholder="Cantitate stoc" required>
+                </div>
+                <br/>
+                <div class = "form-group row">
+                    <label th:if="${#fields.hasErrors('description')}" th:errors="*{description}" class="text-danger">Eroare</label>
+                    <textarea id="description" name="description" th:field="*{description}" class = "form-control" rows = "5" placeholder = "Descriere"></textarea>
+                </div>
+                <br/>
+                <div class="form-row">
+                    <label th:if="${#fields.hasErrors('brand')}" th:errors="*{brand}" class="text-danger">Eroare</label>
+                    <input type="text" id="brand" name="brand" th:field="*{brand}" class="form-control" placeholder="Brand" required>
+                </div>
+                <br/>
+                <div class="form-row">
+                    <label th:if="${#fields.hasErrors('category')}" th:errors="*{category}" class="text-danger">Eroare</label>
+                    <select id="category" name="category" th:field="*{category}" class="form-control" required>
+                        <option value="">Selectează categoria</option>
+                        <option value="CPU">CPU</option>
+                        <option value="GPU">GPU</option>
+                        <option value="MDB">MDB</option>
+                        <option value="SSD">SSD</option>
+                        <option value="PSU">PSU</option>
+                        <option value="RAM">RAM</option>
+                    </select>
+                </div>
+                <br/>
 
-        <div th:if="${cartOrder == null}" class="alert alert-info mt-3" role="alert">
-            Coșul tău de cumpărături este gol. Adaugă produse în coș.
+                <hr/>
+
+                <br/>
+
+                <h3>Garanție (opțional)</h3>
+                <br/>
+                <div class="form-row">
+                    <label th:if="${#fields.hasErrors('warranty.durationMonths')}" th:errors="*{warranty.durationMonths}" class="text-danger">Eroare</label>
+                    <input type="number" id="warrantyDuration" name="warranty.durationMonths" th:field="*{warranty.durationMonths}" class="form-control" placeholder="Durată (în luni)">
+                </div>
+                <br/>
+                <div class="form-row">
+                    <label th:if="${#fields.hasErrors('warranty.type')}" th:errors="*{warranty.type}" class="text-danger">Eroare</label>
+                    <input type="text" id="warrantyType" name="warranty.type" th:field="*{warranty.type}" class="form-control" placeholder="Tip">
+                </div>
+                <br/>
+                <div class="form-row">
+                    <label th:if="${#fields.hasErrors('warranty.terms')}" th:errors="*{warranty.terms}" class="text-danger">Eroare</label>
+                    <input type="text" id="warrantyTerms" name="warranty.terms" th:field="*{warranty.terms}" class="form-control" placeholder="Termeni">
+                </div>
+                <br/>
+                <div class="form-row">
+                    <label th:if="${#fields.hasErrors('warranty.details')}" th:errors="*{warranty.details}" class="text-danger">Eroare</label>
+                    <input type="text" id="warrantyDetails" name="warranty.details" th:field="*{warranty.details}" class="form-control" placeholder="Detalii">
+                </div>
+                <br/>
+                <br/>
+
+                <hr/>
+
+                <br/>
+
+                <h3>Tags (opțional)</h3>
+                <br/>
+                <div id="tagInputs" class="form-row">
+                    <input type="text" name="tags[0].name" th:field="*{tags[0].name}" class="form-control" placeholder="Tag">
+                </div>
+                <br/>
+                <button type="button" id="addTagButton" class="btn btn-success">Adaugă tag</button>
+
+                <br/>
+
+                <hr/>
+
+                <br/>
+                <button class="btn btn-lg btn-primary btn-block" type="submit">Adaugă produs</button>
+            </form>
         </div>
     </main>
+
+    <footer style="padding-top: 25px;">
+        <p>&copy; 2024 CartBlitz</p>
+    </footer>
 
     <script>
         document.getElementById("searchForm").addEventListener("submit", function(event) {
@@ -203,14 +229,20 @@
         });
     </script>
 
-    <script th:inline="javascript">
-        setTimeout(function() {
-            var errorMessage = document.getElementById('errorMessage');
+    <script>
+        document.getElementById("addTagButton").addEventListener("click", function() {
+            var tagInputs = document.getElementById("tagInputs");
+            var index = tagInputs.children.length;
+            var input = document.createElement("input");
 
-            if (errorMessage) {
-                errorMessage.style.display = 'none';
-            }
-        }, 10000);
+            input.setAttribute("type", "text");
+            input.setAttribute("name", "tags[" + index + "].name");
+            input.setAttribute("th:field", "*{tags[" + index + "].name}");
+            input.setAttribute("class", "form-control");
+            input.setAttribute("placeholder", "Tag");
+
+            tagInputs.appendChild(input);
+        });
     </script>
 </body>
 </html>

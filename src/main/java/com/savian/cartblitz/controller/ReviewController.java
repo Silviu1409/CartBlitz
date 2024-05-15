@@ -5,10 +5,13 @@ import com.savian.cartblitz.service.ReviewService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +19,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
-@RestController
+@Controller
 @Validated
 @RequestMapping("review")
 @Tag(name = "Reviews",description = "Endpoint manage Reviews")
@@ -147,6 +150,25 @@ public class ReviewController {
             @Valid @RequestBody ReviewDto reviewDto){
         ReviewDto review = reviewService.saveReview(reviewDto);
         return ResponseEntity.created(URI.create("/review/" + review.getReviewId())).body(review);
+    }
+
+    @PostMapping("")
+    @Operation(description = "Creating review - all info will be put in",
+            summary = "Creating a new review")
+    @ApiResponses(value = {
+            @ApiResponse(description = "Success", responseCode = "201"),
+            @ApiResponse(description = "Bad Request - validation error per request", responseCode = "500"),
+            @ApiResponse(description = "Field validation error", responseCode = "400"),
+    })
+    public String  CreateReviewRedirectToProduct(
+            @Valid @ModelAttribute("review") ReviewDto reviewDto, BindingResult result){
+        if (result.hasErrors()) {
+            return "error";
+        }
+
+        reviewService.saveReview(reviewDto);
+
+        return "redirect:/product/id/" + reviewDto.getProductId();
     }
 
     @PutMapping(path = "/id/{reviewId}", produces = { MediaType.APPLICATION_JSON_VALUE })

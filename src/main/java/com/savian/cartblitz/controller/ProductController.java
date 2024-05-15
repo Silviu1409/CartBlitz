@@ -3,6 +3,7 @@ package com.savian.cartblitz.controller;
 import com.savian.cartblitz.dto.OrderDto;
 import com.savian.cartblitz.dto.OrderProductDto;
 import com.savian.cartblitz.dto.ProductDto;
+import com.savian.cartblitz.dto.ReviewDto;
 import com.savian.cartblitz.model.*;
 import com.savian.cartblitz.repository.OrderProductRepository;
 import com.savian.cartblitz.service.CustomerService;
@@ -28,9 +29,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.security.Principal;
+import java.util.*;
 
 @Controller
 @Validated
@@ -76,13 +76,33 @@ public class ProductController {
             @ApiResponse(description = "Not Found", responseCode = "404"),
     })
     public String GetProductById(
-            @PathVariable Long productId, HttpSession session, Model model){
+            @PathVariable Long productId, Model model, Principal principal){
         Optional<Product> optionalProduct = productService.getProductById(productId);
 
         if (optionalProduct.isPresent()) {
             Product product = optionalProduct.get();
+            ReviewDto review = new ReviewDto();
+
+            if(principal != null){
+                String username = principal.getName();
+                Optional<Customer> optionalCustomer = customerService.getCustomerByUsername(username);
+
+                optionalCustomer.ifPresent(customer -> review.setCustomerId(customer.getCustomerId()));
+            }
+
+            int numImages = productService.getNumImagesForProduct(product.getCategory().toLowerCase(), productId);
+
+            List<String> tagNames = new ArrayList<>();
+            for (com.savian.cartblitz.model.Tag tag : product.getTags()) {
+                tagNames.add(tag.getName());
+            }
+
+            review.setProductId(productId);
 
             model.addAttribute("product", product);
+            model.addAttribute("numImages", numImages);
+            model.addAttribute("review", review);
+            model.addAttribute("tagNames", tagNames);
 
             return "product";
         } else {
@@ -102,11 +122,18 @@ public class ProductController {
             HttpSession session,
             Model model){
         List<ProductDto> products = productService.getProductsByCategory(category);
+        Map<Long, Integer> numImagesMap = new HashMap<>();
+
+        for(ProductDto productDto: products){
+            int numImages = productService.getNumImagesForProduct(productDto.getCategory().toLowerCase(), productDto.getProductId());
+            numImagesMap.put(productDto.getProductId(), numImages);
+        }
 
         session.setAttribute("products", products);
         model.addAttribute("products", products);
         model.addAttribute("category", category);
         model.addAttribute("categoryReadable", getReadableCategory(category));
+        model.addAttribute("numImagesMap", numImagesMap);
 
         return "products";
     }
@@ -131,10 +158,17 @@ public class ProductController {
         }
 
         List<ProductDto> sortedProducts = productService.sortProducts(products, sortBy, sortOrder);
+        Map<Long, Integer> numImagesMap = new HashMap<>();
+
+        for(ProductDto productDto: products){
+            int numImages = productService.getNumImagesForProduct(productDto.getCategory().toLowerCase(), productDto.getProductId());
+            numImagesMap.put(productDto.getProductId(), numImages);
+        }
 
         model.addAttribute("products", sortedProducts);
         model.addAttribute("category", category);
         model.addAttribute("categoryReadable", getReadableCategory(category));
+        model.addAttribute("numImagesMap", numImagesMap);
 
         return "products";
     }
@@ -174,10 +208,17 @@ public class ProductController {
         }
 
         List<ProductDto> sortedProducts = productService.filterProductsMinPriceMaxPrice(products, minPriceValue, maxPriceValue);
+        Map<Long, Integer> numImagesMap = new HashMap<>();
+
+        for(ProductDto productDto: products){
+            int numImages = productService.getNumImagesForProduct(productDto.getCategory().toLowerCase(), productDto.getProductId());
+            numImagesMap.put(productDto.getProductId(), numImages);
+        }
 
         model.addAttribute("products", sortedProducts);
         model.addAttribute("category", category);
         model.addAttribute("categoryReadable", getReadableCategory(category));
+        model.addAttribute("numImagesMap", numImagesMap);
 
         return "products";
     }
@@ -193,9 +234,16 @@ public class ProductController {
             HttpSession session,
             Model model) {
         List<ProductDto> products = productService.searchProducts(searchQuery);
+        Map<Long, Integer> numImagesMap = new HashMap<>();
+
+        for(ProductDto productDto: products){
+            int numImages = productService.getNumImagesForProduct(productDto.getCategory().toLowerCase(), productDto.getProductId());
+            numImagesMap.put(productDto.getProductId(), numImages);
+        }
 
         session.setAttribute("products", products);
         model.addAttribute("products", products);
+        model.addAttribute("numImagesMap", numImagesMap);
 
         return "products";
     }
@@ -219,8 +267,15 @@ public class ProductController {
         }
 
         List<ProductDto> sortedProducts = productService.sortProducts(products, sortBy, sortOrder);
+        Map<Long, Integer> numImagesMap = new HashMap<>();
+
+        for(ProductDto productDto: products){
+            int numImages = productService.getNumImagesForProduct(productDto.getCategory().toLowerCase(), productDto.getProductId());
+            numImagesMap.put(productDto.getProductId(), numImages);
+        }
 
         model.addAttribute("products", sortedProducts);
+        model.addAttribute("numImagesMap", numImagesMap);
 
         return "products";
     }
@@ -259,8 +314,15 @@ public class ProductController {
         }
 
         List<ProductDto> sortedProducts = productService.filterProductsMinPriceMaxPrice(products, minPriceValue, maxPriceValue);
+        Map<Long, Integer> numImagesMap = new HashMap<>();
+
+        for(ProductDto productDto: products){
+            int numImages = productService.getNumImagesForProduct(productDto.getCategory().toLowerCase(), productDto.getProductId());
+            numImagesMap.put(productDto.getProductId(), numImages);
+        }
 
         model.addAttribute("products", sortedProducts);
+        model.addAttribute("numImagesMap", numImagesMap);
 
         return "products";
     }

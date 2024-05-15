@@ -1,11 +1,14 @@
 package com.savian.cartblitz.controller;
 
 import com.savian.cartblitz.dto.OrderDto;
+import com.savian.cartblitz.mapper.OrderMapper;
+import com.savian.cartblitz.model.Order;
 import com.savian.cartblitz.model.OrderStatusEnum;
 import com.savian.cartblitz.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Digits;
@@ -14,11 +17,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.net.URI;
+import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,9 +33,11 @@ import java.util.Optional;
 @Tag(name = "Orders",description = "Endpoint manage Orders")
 public class OrderController {
     OrderService orderService;
+    OrderMapper orderMapper;
 
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, OrderMapper orderMapper) {
         this.orderService = orderService;
+        this.orderMapper = orderMapper;
     }
 
     @GetMapping(produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -72,6 +79,30 @@ public class OrderController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @GetMapping(path = "/id/{orderId}")
+    @Operation(description = "Showing all info about a order with given id",
+            summary = "Showing order with given id")
+    @ApiResponses(value = {
+            @ApiResponse(description = "Success", responseCode = "200"),
+            @ApiResponse(description = "Not Found", responseCode = "404"),
+    })
+    public String viewOrder(@PathVariable Long orderId, Model model, Principal principal){
+        if (orderId == null) {
+            return "redirect:/";
+        }
+        Optional<OrderDto> orderOptional = orderService.getOrderById(orderId);
+
+        if(orderOptional.isEmpty()){
+            return "redirect:/";
+
+        }
+        Order order = orderMapper.orderDtoToOrder(orderOptional.get());
+
+        model.addAttribute("order", order);
+
+        return "orderDetails";
     }
 
     @GetMapping(path = "/customer/{customerId}", produces = { MediaType.APPLICATION_JSON_VALUE })
