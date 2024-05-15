@@ -6,7 +6,6 @@ import com.savian.cartblitz.exception.ProductNotFoundException;
 import com.savian.cartblitz.exception.ReviewNotFoundException;
 import com.savian.cartblitz.mapper.ReviewMapper;
 import com.savian.cartblitz.model.Customer;
-import com.savian.cartblitz.model.Order;
 import com.savian.cartblitz.model.Product;
 import com.savian.cartblitz.model.Review;
 import com.savian.cartblitz.repository.CustomerRepository;
@@ -54,11 +53,6 @@ public class ReviewServiceImpl implements ReviewService{
     @Override
     @Transactional
     public List<ReviewDto> getReviewsByCustomerId(Long customerId) {
-        /*
-        customerRepository.findById(customerId).orElseThrow(() -> new CustomerNotFoundException(customerId));
-
-        return reviewRepository.findByCustomerCustomerId(customerId).stream().map(reviewMapper::reviewToReviewDto).toList();
-        */
         Customer customer = customerRepository.findById(customerId).orElse(null);
         if (customer != null) {
             List<Review> reviews = customer.getReviews();

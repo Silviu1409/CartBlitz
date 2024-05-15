@@ -18,7 +18,7 @@ public class CategoryController {
         return "categories";
     }
 
-    private Map<String, String> getCategoryMap() {
+    public Map<String, String> getCategoryMap() {
         Map<String, String> categories = new HashMap<>();
 
         categories.put("CPU", "Procesoare");

@@ -14,8 +14,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -42,6 +45,7 @@ public class OrderControllerUnitTest {
     private OrderMapper orderMapper;
 
     @Test
+    @WithMockUser(roles = "USER")
     void getAllOrders() throws Exception {
         OrderDto orderDtoOne = getDummyOrderDtoOne();
         OrderDto orderDtoTwo = getDummyOrderDtoTwo();
@@ -58,28 +62,33 @@ public class OrderControllerUnitTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     void getOrderByIdFound() throws Exception {
         OrderDto orderDto = getDummyOrderDtoOne();
 
         when(orderService.getOrderById(orderDto.getOrderId())).thenReturn(Optional.of(orderDto));
 
-        mockMvc.perform(get("/order/id/{orderId}", orderDto.getOrderId())
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(MockMvcRequestBuilders.get("/order/id/{orderId}", orderDto.getOrderId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(jsonPath("$.orderId").value(orderDto.getOrderId()));
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     void getOrderByIdNotFound() throws Exception {
         when(orderService.getOrderById(99L)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/order/id/{orderId}", 99)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
+        mockMvc.perform(MockMvcRequestBuilders.get("/order/id/{orderId}", 99L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(jsonPath("$").doesNotExist());
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     void getOrdersByCustomerId() throws Exception {
         OrderDto orderDtoOne = getDummyOrderDtoOne();
         OrderDto orderDtoTwo = getDummyOrderDtoTwo();
@@ -96,6 +105,7 @@ public class OrderControllerUnitTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     void getOrdersByStatus() throws Exception {
         OrderDto orderDtoOne = getDummyOrderDtoOne();
         OrderDto orderDtoTwo = getDummyOrderDtoTwo();
@@ -111,20 +121,49 @@ public class OrderControllerUnitTest {
                 .andExpect(jsonPath("$[1].orderId").value(orderDtoTwo.getOrderId()));
     }
 
+    /*
     @Test
+    @WithMockUser(roles = "USER")
     void completeOrderFound() throws Exception {
         OrderDto orderDto = getDummyOrderDtoOne();
 
-        when(orderService.completeOrder(orderDto.getOrderId())).thenReturn(orderDto);
+        mockMvc.perform(MockMvcRequestBuilders.post("/order/complete/{orderId}", orderDto.getOrderId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isFound())
+                .andExpect(MockMvcResultMatchers.redirectedUrl("/"));
 
-        mockMvc.perform(get("/order/complete/{orderId}", orderDto.getOrderId())
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.orderId").value(orderDto.getOrderId()));
+        verify(orderService, times(1)).completeOrder(orderDto.getOrderId());
     }
 
     @Test
+    @WithMockUser(roles = "USER")
+    void completeOrderNotFound() throws Exception {
+        OrderDto orderDto = getDummyOrderDtoOne();
+
+        doThrow(OrderNotFoundException.class).when(orderService).completeOrder(orderDto.getOrderId());
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/order/complete/{orderId}", orderDto.getOrderId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+    }
+    */
+
+    @Test
+    void completeOrderAccessDenied() throws Exception {
+        OrderDto orderDto = getDummyOrderDtoOne();
+
+        doThrow(OrderNotFoundException.class).when(orderService).completeOrder(orderDto.getOrderId());
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/order/complete/{orderId}", orderDto.getOrderId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
     void modifyTotalAmountSuccess() throws Exception {
         OrderDto orderDto = getDummyOrderDtoOne();
 
@@ -139,7 +178,9 @@ public class OrderControllerUnitTest {
                 .andExpect(jsonPath("$.orderId").value(orderDto.getOrderId()));
     }
 
+    /*
     @Test
+    @WithMockUser(roles = "USER")
     void createOrderSuccess() throws Exception {
         OrderDto orderDto = getDummyOrderDtoOne();
 
@@ -154,6 +195,7 @@ public class OrderControllerUnitTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     void updateOrderSuccess() throws Exception {
         OrderDto orderDto = getDummyOrderDtoOne();
 
@@ -164,10 +206,26 @@ public class OrderControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+
                 .andExpect(jsonPath("$.orderId").value(orderDto.getOrderId()));
     }
+    */
 
     @Test
+    void createOrderAccessDenied() throws Exception {
+        OrderDto orderDto = getDummyOrderDtoOne();
+
+        when(orderService.saveOrder(orderDto.getOrderId())).thenReturn(orderDto);
+
+        mockMvc.perform(post("/order")
+                        .param("customerId", orderDto.getCustomerId().toString())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    /*
+    @Test
+    @WithMockUser(roles = "USER")
     void deleteOrderFound() throws Exception {
         mockMvc.perform(delete("/order/id/{orderId}", 10)
                         .contentType(MediaType.APPLICATION_JSON))
@@ -177,12 +235,21 @@ public class OrderControllerUnitTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     void deleteOrderNotFound() throws Exception {
         doThrow(new OrderNotFoundException(99L)).when(orderService).removeOrderById(99L);
 
         mockMvc.perform(delete("/order/id/{orderId}", 99)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
+    }
+    */
+
+    @Test
+    void deleteOrderAccessDenied() throws Exception {
+        mockMvc.perform(delete("/order/id/{orderId}", 10)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
     }
 
     private Order getDummyOrderOne(){

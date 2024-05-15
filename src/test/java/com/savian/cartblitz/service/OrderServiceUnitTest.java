@@ -5,11 +5,10 @@ import com.savian.cartblitz.exception.CustomerNotFoundException;
 import com.savian.cartblitz.exception.OrderInProgressException;
 import com.savian.cartblitz.exception.OrderNotFoundException;
 import com.savian.cartblitz.mapper.OrderMapper;
-import com.savian.cartblitz.model.Customer;
-import com.savian.cartblitz.model.Order;
-import com.savian.cartblitz.model.OrderStatusEnum;
+import com.savian.cartblitz.model.*;
 import com.savian.cartblitz.repository.CustomerRepository;
 import com.savian.cartblitz.repository.OrderRepository;
+import com.savian.cartblitz.repository.ProductRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -40,6 +39,8 @@ public class OrderServiceUnitTest {
     private OrderMapper orderMapper;
     @Mock
     private CustomerRepository customerRepository;
+    @Mock
+    private ProductRepository productRepository;
 
     @Test
     void testGetAllOrders() {
@@ -97,19 +98,26 @@ public class OrderServiceUnitTest {
     @Test
     void testGetOrdersByCustomerIdFound() {
         Order order = getDummyOrder();
+        Customer customer = getDummyCustomer();
+        customer.setOrders(List.of(order));
+        order.setCustomer(customer);
+
         OrderDto orderDto = getDummyOrderDto();
 
         log.info("Starting testGetOrdersByCustomerIdFound");
 
         Mockito.when(customerRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(order.getCustomer()));
-        Mockito.when(orderRepository.findByCustomerCustomerId(Mockito.anyLong())).thenReturn(Collections.singletonList(order));
         Mockito.when(orderMapper.orderToOrderDto(order)).thenReturn(orderDto);
 
         List<OrderDto> result = orderService.getOrdersByCustomerId(orderDto.getCustomerId());
         log.info(String.valueOf(order.getOrderId()));
 
+        Assertions.assertNotNull(result);
         Assertions.assertEquals(1, result.size());
         Assertions.assertEquals(orderDto, result.get(0));
+
+        Mockito.verify(customerRepository).findById(customer.getCustomerId());
+        Mockito.verify(orderMapper).orderToOrderDto(order);
 
         log.info("Finished testGetOrdersByCustomerIdFound successfully");
     }
@@ -122,8 +130,10 @@ public class OrderServiceUnitTest {
 
         Mockito.when(customerRepository.findById(Mockito.anyLong())).thenReturn(Optional.empty());
 
-        Assertions.assertThrows(CustomerNotFoundException.class, () -> orderService.getOrdersByCustomerId(orderDto.getCustomerId()));
-        log.error("Customer with given ID was not found");
+        List<OrderDto> result =  orderService.getOrdersByCustomerId(orderDto.getCustomerId());
+        log.error("Customer with given ID was not found, so an empty list has been returned");
+
+        Assertions.assertTrue(result.isEmpty());
 
         log.info("Finished testGetOrdersByCustomerIdCustomerNotFound successfully");
     }
@@ -150,12 +160,14 @@ public class OrderServiceUnitTest {
     @Test
     void testCompleteOrderFound() {
         Order order = getDummyOrder();
+        order.setOrderProducts(List.of(getDummyOrderProduct()));
         OrderDto orderDto = getDummyOrderDto();
 
         log.info("Starting testCompleteOrderFound");
 
         Mockito.when(orderRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(order));
-        Mockito.when(orderRepository.save(Mockito.any())).thenReturn(order);
+        Mockito.when(productRepository.save(Mockito.any())).thenAnswer(invocation -> invocation.getArgument(0));
+        Mockito.when(orderRepository.save(Mockito.any())).thenAnswer(invocation -> invocation.getArgument(0));
         Mockito.when(orderMapper.orderToOrderDto(order)).thenReturn(orderDto);
 
         OrderDto result = orderService.completeOrder(order.getOrderId());
@@ -163,6 +175,11 @@ public class OrderServiceUnitTest {
 
         Assertions.assertNotNull(result);
         Assertions.assertEquals(OrderStatusEnum.COMPLETED, order.getStatus());
+
+        Mockito.verify(orderRepository).findById(order.getOrderId());
+        Mockito.verify(productRepository, Mockito.times(order.getOrderProducts().size())).save(Mockito.any());
+        Mockito.verify(orderRepository).save(order);
+        Mockito.verify(orderMapper).orderToOrderDto(order);
 
         log.info("Finished testCompleteOrderFound successfully");
     }
@@ -265,6 +282,23 @@ public class OrderServiceUnitTest {
     }
 
     @Test
+    void testSaveOrUpdateOrder() {
+        OrderDto orderDto = getDummyOrderDto();
+        Order order = getDummyOrder();
+
+        log.info("Starting testSaveOrUpdateOrder");
+
+        Mockito.when(orderMapper.orderDtoToOrder(orderDto)).thenReturn(order);
+
+        orderService.saveOrUpdateOrder(orderDto);
+        log.info(String.valueOf(orderDto.getOrderId()));
+
+        Mockito.verify(orderRepository).save(order);
+
+        log.info("Finished testSaveOrUpdateOrder successfully");
+    }
+
+    @Test
     void testUpdateOrderFound() {
         Order order = getDummyOrder();
         OrderDto orderDto = getDummyOrderDto();
@@ -359,5 +393,27 @@ public class OrderServiceUnitTest {
         customer.setEmail("test@test.com");
         customer.setFullName("User Test");
         return customer;
+    }
+
+    private OrderProduct getDummyOrderProduct(){
+        OrderProduct orderProduct = new OrderProduct();
+        orderProduct.setOrder(getDummyOrder());
+        orderProduct.setProduct(getDummyProduct());
+        orderProduct.setOrderProductId(new OrderProductId(getDummyOrder().getOrderId(), getDummyProduct().getProductId()));
+        orderProduct.setQuantity(0);
+        orderProduct.setPrice(BigDecimal.valueOf(0));
+        return orderProduct;
+    }
+
+    private Product getDummyProduct(){
+        Product product = new Product();
+        product.setProductId(10L);
+        product.setName("productTest");
+        product.setPrice(BigDecimal.valueOf(0L));
+        product.setStockQuantity(0);
+        product.setDescription("productTest description");
+        product.setBrand("productTest brand");
+        product.setCategory("productTest category");
+        return product;
     }
 }

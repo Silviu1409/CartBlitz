@@ -112,12 +112,14 @@ public class ProductServiceImpl implements ProductService{
         List<Product> byCategory = productRepository.findByCategoryContainingIgnoreCase(search);
         List<Product> byDescription = productRepository.findByDescriptionContainingIgnoreCase(search);
         List<Product> byName = productRepository.findByNameContainingIgnoreCase(search);
+        List<Product> byTag = productRepository.findByTagsNameIgnoreCase(search);
 
         Set<Product> resultSet = new HashSet<>();
         resultSet.addAll(byBrand);
         resultSet.addAll(byCategory);
         resultSet.addAll(byDescription);
         resultSet.addAll(byName);
+        resultSet.addAll(byTag);
 
         return resultSet.stream()
                 .map(productMapper::productToProductDto)

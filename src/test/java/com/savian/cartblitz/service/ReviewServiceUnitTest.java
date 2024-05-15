@@ -102,17 +102,19 @@ public class ReviewServiceUnitTest {
     public void testGetReviewsByCustomerIdFound() {
         List<Review> reviews = new ArrayList<>();
         Review review = getDummyReview();
+        Customer customer = getDummyCustomer();
+        review.setCustomer(customer);
+        customer.setReviews(List.of(review));
         reviews.add(review);
 
         log.info("Starting testGetReviewsByCustomerIdFound");
 
         Mockito.when(customerRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(review.getCustomer()));
-        Mockito.when(reviewRepository.findByCustomerCustomerId(Mockito.anyLong())).thenReturn(reviews);
 
         List<ReviewDto> result = reviewService.getReviewsByCustomerId(review.getCustomer().getCustomerId());
         reviews.forEach(review1 -> log.info(String.valueOf(review1.getReviewId())));
 
-        Mockito.verify(reviewRepository).findByCustomerCustomerId(review.getCustomer().getCustomerId());
+        Mockito.verify(customerRepository).findById(customer.getCustomerId());
         Assertions.assertEquals(reviews.stream().map(reviewMapper::reviewToReviewDto).toList(), result);
 
         log.info("Finished testGetReviewsByCustomerIdFound successfully");
@@ -126,8 +128,10 @@ public class ReviewServiceUnitTest {
 
         Mockito.when(customerRepository.findById(Mockito.anyLong())).thenReturn(Optional.empty());
 
-        Assertions.assertThrows(CustomerNotFoundException.class, () -> reviewService.getReviewsByCustomerId(review.getCustomer().getCustomerId()));
-        log.error("Customer with given ID was not found");
+        List<ReviewDto> result = reviewService.getReviewsByCustomerId(review.getCustomer().getCustomerId());
+        log.error("Customer with given ID was not found, so an empty list has been returned");
+
+        Assertions.assertTrue(result.isEmpty());
 
         Mockito.verify(customerRepository).findById(review.getCustomer().getCustomerId());
 

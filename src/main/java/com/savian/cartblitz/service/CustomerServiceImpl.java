@@ -51,17 +51,6 @@ public class CustomerServiceImpl implements CustomerService{
     }
 
     @Override
-    public Optional<Customer> getCustomerByEmail(String email) {
-        Optional<Customer> customer = customerRepository.findByEmail(email);
-        if (customer.isPresent()) {
-            return customer;
-        }
-        else {
-            throw new CustomerNotFoundException("email", email);
-        }
-    }
-
-    @Override
     public List<CustomerDto> getCustomersAscFullName() {
         return customerRepository.findAllByOrderByFullNameAsc().stream().map(customerMapper::customerToCustomerDto).toList();
     }

@@ -88,9 +88,8 @@ public class GlobalExceptionHandler {
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ModelAndView handlerNotFoundException(Exception exception){
+    public ModelAndView handlerNotFoundException(){
         ModelAndView modelAndView = new ModelAndView();
-        modelAndView.getModel().put("exception",exception);
         modelAndView.setViewName("notFoundException");
         return modelAndView;
     }

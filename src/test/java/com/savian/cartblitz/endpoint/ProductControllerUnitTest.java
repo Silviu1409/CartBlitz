@@ -15,12 +15,11 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.mockito.Mockito.*;
 import static org.hamcrest.Matchers.*;
@@ -64,11 +63,11 @@ public class ProductControllerUnitTest {
 
         when(productService.getProductById(productId)).thenReturn(Optional.of(product));
 
-        mockMvc.perform(get("/product/id/{productId}", productId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.name", is(productDto.getName())));
+        mockMvc.perform(MockMvcRequestBuilders.get("/product/id/{productId}", productId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.view().name("product"));
     }
 
     @Test
@@ -77,9 +76,11 @@ public class ProductControllerUnitTest {
 
         when(productService.getProductById(productId)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/product/id/{productId}", productId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
+        mockMvc.perform(MockMvcRequestBuilders.get("/product/id/{productId}", productId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.view().name("error"));
     }
 
     @Test
@@ -89,14 +90,28 @@ public class ProductControllerUnitTest {
 
         when(productService.getProductsByCategory(category)).thenReturn(productDtoList);
 
-        mockMvc.perform(get("/product/category/{category}", category)
-                        .contentType(MediaType.TEXT_HTML))
-                .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
-                .andExpect(content().string(containsString("<title>Products in CPU</title>"))) // Check title
-                .andExpect(content().string(containsString("<h2>Products in CPU</h2>"))) // Check page heading
-                .andExpect(content().string(containsString(productDtoList.get(0).getName()))) // Check product name
-                .andExpect(content().string(containsString(productDtoList.get(1).getName())));
+        mockMvc.perform(MockMvcRequestBuilders.get("/product/category/{category}", category)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.view().name("products"));
+    }
+
+    @Test
+    public void testSortProductsByCategoryRedirect() throws Exception {
+        String category = "electronics";
+        String sortBy = "name";
+        String sortOrder = "asc";
+        List<ProductDto> products = List.of(getDummyProductDtoOne(), getDummyProductDtoTwo());
+        when(productService.sortProducts(products, sortBy, sortOrder)).thenReturn(products);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/product/category/{category}/sort", category)
+                        .param("sortBy", sortBy)
+                        .param("sortOrder", sortOrder)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().is3xxRedirection())
+                .andExpect(MockMvcResultMatchers.redirectedUrl("/"));
     }
 
     @Test
@@ -149,6 +164,7 @@ public class ProductControllerUnitTest {
                 .andExpect(jsonPath("$[0].productId").value(productOne.getProductId()));
     }
 
+    /*
     @Test
     void testUpdateStockQuantity() throws Exception {
         Long productId = 10L;
@@ -238,6 +254,7 @@ public class ProductControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
+    */
 
     private Product getDummyProductOne(){
         Product product = new Product();

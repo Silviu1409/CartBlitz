@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("h2")
 @Slf4j
@@ -188,6 +189,80 @@ public class ProductServiceUnitTest {
     }
 
     @Test
+    public void testSortProducts(){
+        log.info("Starting testSortProducts");
+
+        List<ProductDto> products = new ArrayList<>();
+        products.add(getDummyProductDto());
+        products.add(getDummyProductDto());
+        products.add(getDummyProductDto());
+
+        products.get(1).setBrand("productTest brand 3");
+        products.get(2).setBrand("productTest brand 2");
+
+        List<ProductDto> sortedProducts = productService.sortProducts(products, "brand", "asc");
+
+        Assertions.assertEquals("productTest brand", sortedProducts.get(0).getBrand());
+        Assertions.assertEquals("productTest brand 2", sortedProducts.get(1).getBrand());
+        Assertions.assertEquals("productTest brand 3", sortedProducts.get(2).getBrand());
+
+        log.info("Finished testSortProducts successfully");
+    }
+
+    @Test
+    public void testFilterProductsMinPriceMaxPrice(){
+        log.info("Starting testFilterProductsMinPriceMaxPrice");
+
+        List<ProductDto> products = new ArrayList<>();
+        products.add(getDummyProductDto());
+        products.add(getDummyProductDto());
+        products.add(getDummyProductDto());
+
+        products.get(1).setBrand("productTest brand 2");
+        products.get(1).setPrice(BigDecimal.valueOf(25));
+        products.get(2).setBrand("productTest brand 3");
+        products.get(2).setPrice(BigDecimal.valueOf(35));
+
+        List<ProductDto> filteredProducts = productService.filterProductsMinPriceMaxPrice(products, new BigDecimal("25.00"), new BigDecimal("35.00"));
+
+        Assertions.assertEquals(2, filteredProducts.size());
+        Assertions.assertEquals("productTest brand 2", filteredProducts.get(0).getBrand());
+        Assertions.assertEquals("productTest brand 3", filteredProducts.get(1).getBrand());
+
+        log.info("Finished testFilterProductsMinPriceMaxPrice successfully");
+    }
+
+    @Test
+    public void testSearchProducts(){
+        log.info("Starting testSearchProducts");
+
+        List<Product> products = new ArrayList<>();
+        products.add(getDummyProduct());
+        products.get(0).setTags(List.of(new Tag("a")));
+        products.get(0).setProductId(1L);
+        products.add(getDummyProduct());
+        products.get(1).setTags(List.of(new Tag("a")));
+        products.get(1).setProductId(2L);
+        products.add(getDummyProduct());
+        products.get(2).setTags(List.of(new Tag("a")));
+        products.get(2).setProductId(3L);
+
+        Mockito.when(productRepository.findByBrandContainingIgnoreCase("a")).thenReturn(products);
+        Mockito.when(productRepository.findByCategoryContainingIgnoreCase("a")).thenReturn(products);
+        Mockito.when(productRepository.findByDescriptionContainingIgnoreCase("a")).thenReturn(products);
+        Mockito.when(productRepository.findByNameContainingIgnoreCase("a")).thenReturn(products);
+        Mockito.when(productRepository.findByTagsNameIgnoreCase("a")).thenReturn(products);
+
+        Mockito.when(productMapper.productToProductDto(Mockito.any())).thenReturn(new ProductDto());
+
+        List<ProductDto> result = productService.searchProducts("a");
+
+        Assertions.assertEquals(3, result.size());
+
+        log.info("Finished testSearchProducts successfully");
+    }
+
+    @Test
     public void testUpdateStockQuantitySuccess() {
         Product existingProduct = getDummyProduct();
 
@@ -226,6 +301,22 @@ public class ProductServiceUnitTest {
         Mockito.verify(productRepository).findById(existingProduct.getProductId());
 
         log.info("Finished testUpdateStockQuantityNotFound successfully");
+    }
+
+    @Test
+    public void testGetNumImagesForProductProductNotFound() {
+        Product product = getDummyProduct();
+
+        log.info("Starting testGetNumImagesForProductProductNotFound");
+
+        Mockito.when(productRepository.findById(Mockito.anyLong())).thenReturn(Optional.empty());
+
+        Assertions.assertThrows(ProductNotFoundException.class, () -> productService.getNumImagesForProduct(product.getCategory(), product.getProductId()));
+        log.error("Product with given ID was not found");
+
+        Mockito.verify(productRepository).findById(product.getProductId());
+
+        log.info("Finished testGetNumImagesForProductProductNotFound successfully");
     }
 
     @Test

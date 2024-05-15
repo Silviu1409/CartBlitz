@@ -2,6 +2,8 @@ package com.savian.cartblitz.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.validation.Validator;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.handler.SimpleMappingExceptionResolver;
 
@@ -19,14 +21,17 @@ public class MvcConfiguration implements WebMvcConfigurer {
 
         Properties mappings = new Properties();
         mappings.setProperty("NumberFormatException", "numberFormatException");
-        //mappings.setProperty("NotFoundException", "notFoundException");
         r.setExceptionMappings(mappings);
 
         Properties statusCodes = new Properties();
         statusCodes.setProperty("NumberFormatException", "400");
-        //statusCodes.setProperty("NotFoundException", "404");
         r.setStatusCodes(statusCodes);
 
         return r;
+    }
+
+    @Override
+    public Validator getValidator() {
+        return new LocalValidatorFactoryBean();
     }
 }

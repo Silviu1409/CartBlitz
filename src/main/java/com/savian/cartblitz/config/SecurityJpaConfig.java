@@ -30,9 +30,10 @@ public class SecurityJpaConfig {
         return http
                 .authorizeHttpRequests(auth -> auth
 
-                        .requestMatchers("/", "/home", "/login", "/register", "/categories", "/product**", "/product/**", "/notFoundException", "/webjars/**", "/resources/**", "/images/**").permitAll()
+                        .requestMatchers("/", "/home", "/login", "/register", "/categories", "/product**", "/product/**", "/webjars/**", "/resources/**", "/images/**").permitAll()
                         .requestMatchers("/cart", "/order/complete/**", "/product/add-to-cart/**", "/profile", "/review", "/order/**").hasAuthority("ROLE_USER")
-                        .requestMatchers("/addProduct").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/addProduct", "/orderProduct").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/orderProduct", "/customer", "/order", "/review", "/tags**", "/warranty").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .userDetailsService(userDetailsService)
@@ -49,7 +50,7 @@ public class SecurityJpaConfig {
                                 .logoutSuccessUrl("/")
                                 .deleteCookies("JSESSIONID")
                 )
-                .exceptionHandling(ex -> ex.accessDeniedPage("/access_denied"))
+                .exceptionHandling(ex -> ex.accessDeniedPage("/accessDenied"))
                 .build();
     }
 

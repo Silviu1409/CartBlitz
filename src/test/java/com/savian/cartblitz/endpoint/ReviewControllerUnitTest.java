@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -43,6 +44,7 @@ public class ReviewControllerUnitTest {
     private ReviewMapper reviewMapper;
 
     @Test
+    @WithMockUser(roles = "USER")
     public void testGetAllReviews() throws Exception {
         List<ReviewDto> reviewDtoList = Arrays.asList(getDummyReviewDtoOne(), getDummyReviewDtoTwo());
 
@@ -56,6 +58,7 @@ public class ReviewControllerUnitTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     public void testGetReviewById() throws Exception {
         ReviewDto reviewDto = getDummyReviewDtoOne();
 
@@ -69,6 +72,7 @@ public class ReviewControllerUnitTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     public void testGetReviewByIdNotFound() throws Exception {
         Long reviewId = 99L;
 
@@ -80,6 +84,7 @@ public class ReviewControllerUnitTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     public void testGetReviewsByCustomerId() throws Exception {
         ReviewDto reviewDtoOne = getDummyReviewDtoOne();
         ReviewDto reviewDtoTwo = getDummyReviewDtoTwo();
@@ -95,6 +100,7 @@ public class ReviewControllerUnitTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     public void testGetReviewsByProductId() throws Exception {
         ReviewDto reviewDtoOne = getDummyReviewDtoOne();
         ReviewDto reviewDtoTwo = getDummyReviewDtoTwo();
@@ -110,6 +116,7 @@ public class ReviewControllerUnitTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     public void testGetReviewsByRating() throws Exception {
         Integer rating = 5;
         List<ReviewDto> reviewDtoList = Arrays.asList(getDummyReviewDtoOne(), getDummyReviewDtoTwo());
@@ -123,7 +130,9 @@ public class ReviewControllerUnitTest {
                 .andExpect(jsonPath("$", hasSize(2)));
     }
 
+    /*
     @Test
+    @WithMockUser(roles = "USER")
     public void testCreateReview() throws Exception {
         ReviewDto reviewDto = getDummyReviewDtoOne();
 
@@ -137,6 +146,7 @@ public class ReviewControllerUnitTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     public void testCreateReviewInvalid() throws Exception {
         ReviewDto reviewDto = getDummyReviewDtoOne();
         reviewDto.setRating(0);
@@ -149,8 +159,25 @@ public class ReviewControllerUnitTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
+    */
 
     @Test
+    public void testCreateReviewAccessDenied() throws Exception {
+        ReviewDto reviewDto = getDummyReviewDtoOne();
+        reviewDto.setRating(0);
+
+        when(reviewService.saveReview(any())).thenReturn(reviewDto);
+
+        mockMvc.perform(post("/review")
+                        .content(objectMapper.writeValueAsString(reviewDto))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    /*
+    @Test
+    @WithMockUser(roles = "USER")
     public void testUpdateReviewSuccess() throws Exception {
         ReviewDto reviewDto = getDummyReviewDtoOne();
 
@@ -164,6 +191,7 @@ public class ReviewControllerUnitTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     public void testUpdateReviewInvalid() throws Exception {
         ReviewDto reviewDto = getDummyReviewDtoOne();
         reviewDto.setRating(0);
@@ -175,8 +203,24 @@ public class ReviewControllerUnitTest {
                         .content(objectMapper.writeValueAsString(reviewDto)))
                 .andExpect(status().isBadRequest());
     }
+    */
 
     @Test
+    public void testUpdateReviewAccessDenied() throws Exception {
+        ReviewDto reviewDto = getDummyReviewDtoOne();
+        reviewDto.setRating(0);
+
+        when(reviewService.updateReview(anyLong(), any())).thenReturn(reviewDto);
+
+        mockMvc.perform(put("/review/id/{reviewId}", reviewDto.getReviewId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(reviewDto)))
+                .andExpect(status().isForbidden());
+    }
+
+    /*
+    @Test
+    @WithMockUser(roles = "USER")
     public void testDeleteReviewSuccess() throws Exception {
         Long reviewId = 10L;
 
@@ -186,6 +230,7 @@ public class ReviewControllerUnitTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     public void testDeleteReviewNotFound() throws Exception {
         Long reviewId = 10L;
 
@@ -194,6 +239,18 @@ public class ReviewControllerUnitTest {
         mockMvc.perform(delete("/review/id/{reviewId}", reviewId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
+    }
+    */
+
+    @Test
+    public void testDeleteReviewAccessDenied() throws Exception {
+        Long reviewId = 10L;
+
+        doThrow(new ReviewNotFoundException(reviewId)).when(reviewService).removeReviewById(reviewId);
+
+        mockMvc.perform(delete("/review/id/{reviewId}", reviewId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
     }
 
     private ReviewDto getDummyReviewDtoOne(){

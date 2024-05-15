@@ -53,11 +53,6 @@ public class OrderServiceImpl implements OrderService{
     @Override
     @Transactional
     public List<OrderDto> getOrdersByCustomerId(Long customerId) {
-        /*
-        customerRepository.findById(customerId).orElseThrow(() -> new CustomerNotFoundException(customerId));
-
-        return orderRepository.findByCustomerCustomerId(customerId).stream().map(orderMapper::orderToOrderDto).toList();
-        */
         Customer customer = customerRepository.findById(customerId).orElse(null);
         if (customer != null) {
             List<Order> orders = customer.getOrders();
@@ -165,7 +160,7 @@ public class OrderServiceImpl implements OrderService{
     }
 
     @Override
-    public OrderDto updateTotalAmount(Long orderId, BigDecimal amount) {
+    public void updateTotalAmount(Long orderId, BigDecimal amount) {
         Optional<Order> optOrder = orderRepository.findById(orderId);
         if (optOrder.isPresent()){
             Order prevOrder = optOrder.get();
@@ -174,7 +169,7 @@ public class OrderServiceImpl implements OrderService{
             prevOrder.setOrderDate(Timestamp.valueOf(LocalDateTime.now()));
 
             Order savedOrder = orderRepository.save(prevOrder);
-            return orderMapper.orderToOrderDto(savedOrder);
+            orderMapper.orderToOrderDto(savedOrder);
         }
         else{
             throw new OrderNotFoundException(orderId);

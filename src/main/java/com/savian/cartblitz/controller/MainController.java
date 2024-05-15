@@ -1,7 +1,9 @@
 package com.savian.cartblitz.controller;
 
+import com.savian.cartblitz.config.WarrantyValidator;
 import com.savian.cartblitz.dto.CustomerDto;
 import com.savian.cartblitz.dto.OrderProductDto;
+import com.savian.cartblitz.exception.ResourceNotFoundException;
 import com.savian.cartblitz.model.*;
 import com.savian.cartblitz.model.security.Authority;
 import com.savian.cartblitz.repository.CustomerRepository;
@@ -14,18 +16,31 @@ import com.savian.cartblitz.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.Principal;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
+
 
 @Slf4j
 @Controller
@@ -44,11 +59,16 @@ public class MainController {
     private WarrantyRepository warrantyRepository;
     @Autowired
     private TagRepository tagRepository;
+    @Autowired
+    private WarrantyValidator warrantyValidator;
 
     @RequestMapping({"","/","/home"})
     public ModelAndView getHome(){
         return new ModelAndView("main");
     }
+
+    @GetMapping("/accessDenied")
+    public String accessDeniedPage(){ return "accessDenied"; }
 
     @GetMapping("/login")
     public String showLogInForm(){
@@ -203,10 +223,13 @@ public class MainController {
 
     @PostMapping("/addProduct")
     public String processRegister(@Valid @ModelAttribute("product") Product product,
+                                  @RequestParam("images") List<MultipartFile> images,
                                   BindingResult bindingResult,
                                   Model model
     ) {
         log.info("add product form for: {}", product.toString());
+
+        warrantyValidator.validate(product, bindingResult);
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("product", product);
@@ -215,16 +238,24 @@ public class MainController {
 
         Warranty warranty = product.getWarranty();
 
-        if(warranty != null){
+        if(warrantyValidator.areAllWarrantyFieldsCompleted(warranty)){
             warranty = warrantyRepository.save(product.getWarranty());
 
             product.setWarranty(warranty);
+        }
+        else{
+            product.setWarranty(null);
         }
 
         Set<Tag> newTagsSet = new HashSet<>();
 
         for (Tag tag : product.getTags()) {
             tag.setName(tag.getName().toUpperCase());
+
+            if(tag.getName().isEmpty() || tag.getName().isBlank()){
+                continue;
+            }
+
             Optional<Tag> existingTagOptional = tagRepository.findByName(tag.getName());
             if (existingTagOptional.isPresent()) {
                 Tag existingTag = existingTagOptional.get();
@@ -237,10 +268,62 @@ public class MainController {
 
         product.setTags(newTagsSet.stream().toList());
 
+        if(newTagsSet.isEmpty()){
+            product.setTags(null);
+        }
+
         Product savedProduct = productRepository.save(product);
 
         log.info("added product successfully: {}", savedProduct);
 
+        int idx = 1;
+
+        if(images != null) {
+            for (MultipartFile image: images) {
+                if (image.isEmpty()) {
+                    continue;
+                }
+
+                try {
+                    byte[] imageBytes = image.getBytes();
+
+                    ByteArrayInputStream bais = new ByteArrayInputStream(imageBytes);
+                    BufferedImage originalImage = ImageIO.read(bais);
+
+                    BufferedImage resizedImage = new BufferedImage(800, 800, BufferedImage.TYPE_INT_RGB);
+                    Graphics2D g2d = resizedImage.createGraphics();
+                    g2d.drawImage(originalImage.getScaledInstance(800, 800, Image.SCALE_SMOOTH), 0, 0, null);
+
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    ImageIO.write(resizedImage, "jpg", baos);
+                    byte[] resizedImageBytes = baos.toByteArray();
+
+                    Long productId = savedProduct.getProductId();
+
+                    String productDir = "src/main/resources/static/images/products/" + product.getCategory() + "/";
+                    String imageName = productId + "_" + idx + ".jpg";
+                    Path imagePath = Paths.get(productDir, imageName);
+                    Files.write(imagePath, resizedImageBytes);
+
+                    idx++;
+                } catch (IOException e) {
+                    log.error(e.toString());
+
+                    return "redirect:/";
+                }
+            }
+
+            log.info("added product images successfully: {}", savedProduct);
+        }
+
         return "redirect:/";
+    }
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ModelAndView handlerNotFoundException(){
+        ModelAndView modelAndView = new ModelAndView();
+        modelAndView.setViewName("notFoundException");
+        return modelAndView;
     }
 }

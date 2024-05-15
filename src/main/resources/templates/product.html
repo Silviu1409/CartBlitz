@@ -348,17 +348,17 @@
 
                     <div class="row">
                         <div class="col-md-12">
-                            <div th:each="review : ${product.reviews}">
+                            <div th:each="review, iterStat : ${product.reviews}">
                                 <div class="review-container mb-4" style="max-width: 50%;">
                                     <div class="card">
                                         <div class="card-body">
                                             <div class="review-meta">
                                                 <p class="card-text" th:text="${review.customer.username} + ' -'"></p>
-                                                <p id="formattedDate" class="card-text review-date"></p>
+                                                <p th:id="'formattedDate_' + ${iterStat.index}" class="card-text review-date"></p>
                                                 <script th:inline="javascript">
                                                     var formattedDate = formatRelativeTime([[${review.reviewDate}]]);
 
-                                                    document.getElementById('formattedDate').textContent = formattedDate;
+                                                    document.getElementById('formattedDate_' + /*[[${iterStat.index}]]*/ '').textContent = formattedDate;
                                                 </script>
                                             </div>
 

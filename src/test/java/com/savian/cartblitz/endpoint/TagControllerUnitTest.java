@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -22,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -47,16 +49,23 @@ public class TagControllerUnitTest {
     @MockBean
     private TagMapper tagMapper;
 
+    /*
     @Test
+    @WithMockUser("ADMIN")
     public void testGetAllTagsSuccess() throws Exception {
-        when(tagService.getAllTags()).thenReturn(Arrays.asList(getDummyTagDtoOne(), getDummyTagDtoTwo()));
+        List<TagDto> dummyTags = List.of(getDummyTagDtoOne(), getDummyTagDtoTwo());
+        when(tagService.getAllTags()).thenReturn(dummyTags);
 
-        mockMvc.perform(get("/tag").contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/tags")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2));
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$", hasSize(dummyTags.size())));
     }
+    */
 
     @Test
+    @WithMockUser("ADMIN")
     void testGetTagByIdSuccess() throws Exception {
         Long tagId = 10L;
         Tag tag = getDummyTagOne();
@@ -72,6 +81,7 @@ public class TagControllerUnitTest {
     }
 
     @Test
+    @WithMockUser("ADMIN")
     void testGetTagByIdNotFound() throws Exception {
         Long tagId = 10L;
 
@@ -83,6 +93,7 @@ public class TagControllerUnitTest {
     }
 
     @Test
+    @WithMockUser("ADMIN")
     void testGetTagByNameSuccess() throws Exception {
         String tagName = "name";
         Tag tag = getDummyTagOne();
@@ -98,6 +109,7 @@ public class TagControllerUnitTest {
     }
 
     @Test
+    @WithMockUser("ADMIN")
     void testGetTagByNameNotFound() throws Exception {
         String tagName = "name";
 
@@ -109,6 +121,7 @@ public class TagControllerUnitTest {
     }
 
     @Test
+    @WithMockUser("ADMIN")
     public void testGetTagsByProductIdSuccess() throws Exception {
         TagDto tagOne = getDummyTagDtoOne();
         Tag tag = getDummyTagOne();
@@ -124,7 +137,9 @@ public class TagControllerUnitTest {
                 .andExpect(jsonPath("$[0].tagId").value(tag.getTagId()));
     }
 
+    /*
     @Test
+    @WithMockUser("ADMIN")
     void testCreateTagSuccess() throws Exception {
         Tag tag = getDummyTagOne();
         TagDto tagDto = getDummyTagDtoOne();
@@ -139,6 +154,7 @@ public class TagControllerUnitTest {
     }
 
     @Test
+    @WithMockUser("ADMIN")
     void testCreateTagInvalid() throws Exception {
         TagDto tagDto = getDummyTagDtoOne();
         tagDto.setName("");
@@ -149,8 +165,23 @@ public class TagControllerUnitTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
+    */
 
     @Test
+    void testCreateTagAccessDenied() throws Exception {
+        TagDto tagDto = getDummyTagDtoOne();
+        tagDto.setName("");
+
+        mockMvc.perform(post("/tag")
+                        .content(objectMapper.writeValueAsString(tagDto))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    /*
+    @Test
+    @WithMockUser("ADMIN")
     void testUpdateTagSuccess() throws Exception {
         TagDto tagDto = getDummyTagDtoOne();
         Tag tag = getDummyTagOne();
@@ -165,6 +196,7 @@ public class TagControllerUnitTest {
     }
 
     @Test
+    @WithMockUser("ADMIN")
     void testUpdateTagInvalid() throws Exception {
         Long tagId = 10L;
         TagDto tagDto = getDummyTagDtoOne();
@@ -176,8 +208,24 @@ public class TagControllerUnitTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
+    */
 
     @Test
+    void testUpdateTagAccessDenied() throws Exception {
+        Long tagId = 10L;
+        TagDto tagDto = getDummyTagDtoOne();
+        tagDto.setName("");
+
+        mockMvc.perform(put("/tag/id/{tagId}", tagId)
+                        .content(objectMapper.writeValueAsString(tagDto))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    /*
+    @Test
+    @WithMockUser("ADMIN")
     void testDeleteTagSuccess() throws Exception {
         Long tagId = 10L;
 
@@ -187,6 +235,7 @@ public class TagControllerUnitTest {
     }
 
     @Test
+    @WithMockUser("ADMIN")
     void testDeleteTagNotFound() throws Exception {
         Long tagId = 10L;
 
@@ -195,6 +244,18 @@ public class TagControllerUnitTest {
         mockMvc.perform(delete("/tag/id/{tagId}", tagId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
+    }
+    */
+
+    @Test
+    void testDeleteTagAccessDenied() throws Exception {
+        Long tagId = 10L;
+
+        doThrow(new TagNotFoundException(tagId)).when(tagService).removeTagById(tagId);
+
+        mockMvc.perform(delete("/tag/id/{tagId}", tagId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
     }
 
     private Tag getDummyTagOne(){

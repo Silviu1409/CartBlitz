@@ -234,7 +234,6 @@ public class OrderProductServiceUnitTest {
 
         Assertions.assertEquals(existingOrderProduct, result);
 
-        Mockito.verify(productService, Mockito.times(2)).updateStockQuantity(existingOrderProduct.getProduct().getProductId(), existingOrderProduct.getQuantity());
         Mockito.verify(orderService, Mockito.times(2)).modifyTotalAmount(Mockito.anyLong(), Mockito.any(BigDecimal.class));
 
         log.info("Finished testSaveOrderProductUpdateOrderProduct successfully");
@@ -274,7 +273,6 @@ public class OrderProductServiceUnitTest {
         log.info(String.valueOf(result.getOrderProductId()));
 
         Assertions.assertEquals(existingOrderProduct, result);
-        Mockito.verify(productService, Mockito.times(2)).updateStockQuantity(Mockito.anyLong(), Mockito.anyInt());
         Mockito.verify(orderService, Mockito.times(2)).modifyTotalAmount(Mockito.anyLong(), Mockito.any(BigDecimal.class));
 
         log.info("Finished testUpdateOrderProduct successfully");
@@ -305,7 +303,6 @@ public class OrderProductServiceUnitTest {
         orderProductService.removeOrderProductById(orderProduct.getOrder().getOrderId(), orderProduct.getProduct().getProductId());
         log.info(String.valueOf(orderProduct.getOrderProductId()));
 
-        Mockito.verify(productService).updateStockQuantity(Mockito.anyLong(), Mockito.anyInt());
         Mockito.verify(orderService).modifyTotalAmount(Mockito.anyLong(), Mockito.any(BigDecimal.class));
         Mockito.verify(orderProductRepository).deleteByOrderIdAndProductId(orderProduct.getOrder().getOrderId(), orderProduct.getProduct().getProductId());
 

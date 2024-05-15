@@ -2,7 +2,7 @@
 <html lang="ro" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Exception</title>
+    <title>Pagina nu a fost găsită</title>
 
     <script th:src="@{/webjars/jquery/jquery.min.js}"></script>
     <script th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
@@ -11,31 +11,25 @@
 </head>
 
 <body>
-    <div class="container-fluid" style="margin-top: 20px">
-        <div class="row">
-            <div class="col-md-6 col-md-offset-3">
-                <div class="pannel-group">
-                    <div class="panel panel-primary">
-                        <div class="panel-heading">
-                            <h1 class="panel-title" th:text="'not found exception 404'">Resource type</h1>
-                        </div>
-                        <div class="panel-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <label th:for="exception">Error</label>
-                                    <p th:text="${exception.getClass()}">Error</p>
-                                </div>
-                                <div class="col-md-6">
-                                    <p th:text="${exception.getMessage()}">description</p>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+            <div class="panel panel-danger">
+                <div class="panel-heading">
+                    <h1 class="panel-title">Pagina nu a fost găsită</h1>
+                </div>
+                <div class="panel-body">
+                    <p>Pagina pe care o căutați s-ar putea să fi fost ștearsă, să îi fi fost schimbat numele sau să fie temporar indisponibilă.</p>
+                    <p>Vă rugăm să încercați următoarele:</p>
+                    <ul>
+                        <li>Verificați URL-ul pentru eventuale erori și încercați din nou.</li>
+                        <li>Întoarceți-vă la <a href="/">pagina de start</a>.</li>
+                        <li>Folosiți funcția de căutare pentru a găsi conținutul căutat.</li>
+                    </ul>
                 </div>
             </div>
         </div>
     </div>
+</div>
 </body>
-
 </html>
