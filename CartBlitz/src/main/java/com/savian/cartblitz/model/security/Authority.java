@@ -22,8 +22,4 @@ public class Authority {
 
     @ManyToMany(mappedBy = "authorities")
     private Set<Customer> customers;
-
-    public Authority(String roleUser) {
-        this.role = roleUser;
-    }
 }

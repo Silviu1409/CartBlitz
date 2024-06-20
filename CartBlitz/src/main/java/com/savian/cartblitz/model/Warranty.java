@@ -1,7 +1,9 @@
 package com.savian.cartblitz.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Objects;
@@ -9,6 +11,8 @@ import java.util.Objects;
 @Setter
 @Getter
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "warranty")
 public class Warranty {
     @Id
@@ -29,8 +33,6 @@ public class Warranty {
 
     @Column(name = "details", nullable = false)
     private String details;
-
-    public Warranty() {}
 
     @Override
     public boolean equals(Object o) {

@@ -13,14 +13,18 @@ import com.savian.cartblitz.repository.WarrantyRepository;
 import com.savian.cartblitz.repository.security.AuthorityRepository;
 import com.savian.cartblitz.service.OrderProductService;
 import com.savian.cartblitz.service.OrderService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
@@ -44,6 +48,8 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Controller
+@Validated
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Main controller", description = "Main endpoint")
 public class MainController {
     @Autowired
     private CustomerRepository customerRepository;
@@ -62,26 +68,64 @@ public class MainController {
     @Autowired
     private WarrantyValidator warrantyValidator;
 
-    @RequestMapping({"","/","/home"})
+    @RequestMapping(value = {"", "/", "/home"}, produces = MediaType.TEXT_HTML_VALUE)
+    @Operation(
+            description = "Displays the home page",
+            summary = "Home Page",
+            responses = {
+                    @ApiResponse(description = "Success", responseCode = "200")
+            }
+    )
     public ModelAndView getHome(){
         return new ModelAndView("main");
     }
 
-    @GetMapping("/accessDenied")
+    @GetMapping(value = "/accessDenied", produces = MediaType.TEXT_HTML_VALUE)
+    @Operation(
+            description = "Displays the access denied page",
+            summary = "Access Denied Page",
+            responses = {
+                    @ApiResponse(description = "Success", responseCode = "200")
+            }
+    )
     public String accessDeniedPage(){ return "accessDenied"; }
 
-    @GetMapping("/login")
+    @GetMapping(value = "/login", produces = MediaType.TEXT_HTML_VALUE)
+    @Operation(
+            description = "Displays the login form",
+            summary = "Login Form",
+            responses = {
+                    @ApiResponse(description = "Success", responseCode = "200")
+            }
+    )
     public String showLogInForm(){
         return "login";
     }
 
-    @GetMapping("/register")
+    @GetMapping(value = "/register", produces = MediaType.TEXT_HTML_VALUE)
+    @Operation(
+            description = "Displays the registration form",
+            summary = "Registration Form",
+            responses = {
+                    @ApiResponse(description = "Success", responseCode = "200")
+            }
+    )
     public String showRegisterForm(Model model) {
         model.addAttribute("customer", new CustomerDto());
         return "register";
     }
 
-    @PostMapping("/register")
+    @PostMapping(value = "/register", produces = MediaType.TEXT_HTML_VALUE)
+    @Operation(
+            description = "Processes the registration form and registers a new user",
+            summary = "Register a new user",
+            responses = {
+                    @ApiResponse(description = "Registration successful", responseCode = "302"),
+                    @ApiResponse(description = "Validation error", responseCode = "400"),
+                    @ApiResponse(description = "Username already exists", responseCode = "409"),
+                    @ApiResponse(description = "Email already exists", responseCode = "409")
+            }
+    )
     public String processRegister(@Valid @ModelAttribute("customer") CustomerDto customer,
                                BindingResult bindingResult,
                                Model model
@@ -132,7 +176,16 @@ public class MainController {
         return "redirect:/login";
     }
 
-    @GetMapping("/profile")
+    @GetMapping(value = "/profile", produces = MediaType.TEXT_HTML_VALUE)
+    @Operation(
+            description = "Displays the profile page of the logged-in user",
+            summary = "View Profile",
+            responses = {
+                    @ApiResponse(description = "Profile page", responseCode = "200"),
+                    @ApiResponse(description = "Redirect to home", responseCode = "302"),
+                    @ApiResponse(description = "Access denied", responseCode = "403")
+            }
+    )
     public String viewProfile(Model model, Principal principal) {
         String username = principal.getName();
         Optional<Customer> optionalCustomer = customerRepository.findByUsername(username);
@@ -150,7 +203,16 @@ public class MainController {
         }
     }
 
-    @GetMapping("/cart")
+    @GetMapping(value = "/cart", produces = MediaType.TEXT_HTML_VALUE)
+    @Operation(
+            description = "Displays the cart page of the logged-in user",
+            summary = "View Cart",
+            responses = {
+                    @ApiResponse(description = "Cart page", responseCode = "200"),
+                    @ApiResponse(description = "Redirect to home", responseCode = "302"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+            }
+    )
     public String viewCart(Model model, Principal principal, RedirectAttributes redirectAttributes) {
         String username = principal.getName();
         Optional<Customer> optionalCustomer = customerRepository.findByUsername(username);
@@ -215,13 +277,31 @@ public class MainController {
         }
     }
 
-    @GetMapping("/addProduct")
+    @GetMapping(value = "/addProduct", produces = MediaType.TEXT_HTML_VALUE)
+    @Operation(
+            description = "Displays the form to add a new product",
+            summary = "Add Product Form",
+            responses = {
+                    @ApiResponse(description = "Add product form", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403")
+
+            }
+    )
     public String showProductAdd(Model model) {
         model.addAttribute("product", new Product());
         return "productAdd";
     }
 
-    @PostMapping("/addProduct")
+    @PostMapping(value = "/addProduct", produces = MediaType.TEXT_HTML_VALUE)
+    @Operation(
+            description = "Processes the add product form and saves the new product",
+            summary = "Add Product",
+            responses = {
+                    @ApiResponse(description = "Redirect to home", responseCode = "302"),
+                    @ApiResponse(description = "Validation error", responseCode = "400"),
+                    @ApiResponse(description = "Access denied", responseCode = "403")
+            }
+    )
     public String processRegister(@Valid @ModelAttribute("product") Product product,
                                   @RequestParam("images") List<MultipartFile> images,
                                   BindingResult bindingResult,

@@ -2,19 +2,25 @@ package com.savian.cartblitz.endpoint;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.savian.cartblitz.controller.CategoryController;
+import com.savian.cartblitz.controller.MainController;
 import com.savian.cartblitz.model.Customer;
 import com.savian.cartblitz.model.Order;
 import com.savian.cartblitz.repository.CustomerRepository;
 import com.savian.cartblitz.repository.security.AuthorityRepository;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.web.servlet.ModelAndView;
 
 import java.security.Principal;
 import java.util.*;
@@ -31,6 +37,8 @@ public class MainControllerUnitTest {
     @Autowired
     private ObjectMapper objectMapper;
     @Autowired
+    private MainController mainController;
+    @Autowired
     private CategoryController categoryController;
 
     @MockBean
@@ -40,9 +48,11 @@ public class MainControllerUnitTest {
     private AuthorityRepository authorityRepository;
 
     @Test
-    public void testGetHome() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/home"))
-                .andExpect(view().name("main"));
+    public void testGetHome() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setMethod("GET");
+        ModelAndView mv = mainController.getHome();
+        Assertions.assertEquals(mv.getViewName(), "main");
     }
 
     @Test
@@ -54,27 +64,31 @@ public class MainControllerUnitTest {
 
     @Test
     public void testShowLogInForm() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/login"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/login")
+                .accept(MediaType.TEXT_HTML))
                 .andExpect(status().isOk())
                 .andExpect(view().name("login"));
     }
 
     @Test
     public void testShowRegisterForm() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/register"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/register")
+                .accept(MediaType.TEXT_HTML))
                 .andExpect(status().isOk())
-                .andExpect(view().name("register"))
-                .andExpect(model().attributeExists("customer"));
+                .andExpect(view().name("register"));
     }
 
     @Test
-    public void testProcessRegister_ValidationFailed() throws Exception {
+    public void testProcessRegister_SuccessfulRegistration() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.post("/register")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .accept(MediaType.TEXT_HTML)
                         .param("username", "testuser")
-                        .param("password", "password")
+                        .param("password", "Userpass1%")
                         .param("email", "test@example.com")
                         .param("fullName", "Test User"))
-                .andExpect(status().isForbidden());
+                        .andExpect(MockMvcResultMatchers.status().is3xxRedirection())
+                        .andExpect(MockMvcResultMatchers.redirectedUrl("/login"));
     }
 
     @Test

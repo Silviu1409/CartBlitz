@@ -18,7 +18,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -49,23 +48,21 @@ public class TagControllerUnitTest {
     @MockBean
     private TagMapper tagMapper;
 
-    /*
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     public void testGetAllTagsSuccess() throws Exception {
         List<TagDto> dummyTags = List.of(getDummyTagDtoOne(), getDummyTagDtoTwo());
         when(tagService.getAllTags()).thenReturn(dummyTags);
 
-        mockMvc.perform(get("/tags")
+        mockMvc.perform(get("/tag")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$", hasSize(dummyTags.size())));
     }
-    */
 
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     void testGetTagByIdSuccess() throws Exception {
         Long tagId = 10L;
         Tag tag = getDummyTagOne();
@@ -81,7 +78,7 @@ public class TagControllerUnitTest {
     }
 
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     void testGetTagByIdNotFound() throws Exception {
         Long tagId = 10L;
 
@@ -93,7 +90,7 @@ public class TagControllerUnitTest {
     }
 
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     void testGetTagByNameSuccess() throws Exception {
         String tagName = "name";
         Tag tag = getDummyTagOne();
@@ -109,7 +106,7 @@ public class TagControllerUnitTest {
     }
 
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     void testGetTagByNameNotFound() throws Exception {
         String tagName = "name";
 
@@ -121,7 +118,7 @@ public class TagControllerUnitTest {
     }
 
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     public void testGetTagsByProductIdSuccess() throws Exception {
         TagDto tagOne = getDummyTagDtoOne();
         Tag tag = getDummyTagOne();
@@ -137,9 +134,8 @@ public class TagControllerUnitTest {
                 .andExpect(jsonPath("$[0].tagId").value(tag.getTagId()));
     }
 
-    /*
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     void testCreateTagSuccess() throws Exception {
         Tag tag = getDummyTagOne();
         TagDto tagDto = getDummyTagDtoOne();
@@ -154,7 +150,7 @@ public class TagControllerUnitTest {
     }
 
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     void testCreateTagInvalid() throws Exception {
         TagDto tagDto = getDummyTagDtoOne();
         tagDto.setName("");
@@ -165,9 +161,9 @@ public class TagControllerUnitTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
-    */
 
     @Test
+    @WithMockUser(roles = "USER")
     void testCreateTagAccessDenied() throws Exception {
         TagDto tagDto = getDummyTagDtoOne();
         tagDto.setName("");
@@ -179,9 +175,8 @@ public class TagControllerUnitTest {
                 .andExpect(status().isForbidden());
     }
 
-    /*
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     void testUpdateTagSuccess() throws Exception {
         TagDto tagDto = getDummyTagDtoOne();
         Tag tag = getDummyTagOne();
@@ -196,7 +191,7 @@ public class TagControllerUnitTest {
     }
 
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     void testUpdateTagInvalid() throws Exception {
         Long tagId = 10L;
         TagDto tagDto = getDummyTagDtoOne();
@@ -208,9 +203,9 @@ public class TagControllerUnitTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
-    */
 
     @Test
+    @WithMockUser(roles = "USER")
     void testUpdateTagAccessDenied() throws Exception {
         Long tagId = 10L;
         TagDto tagDto = getDummyTagDtoOne();
@@ -223,9 +218,8 @@ public class TagControllerUnitTest {
                 .andExpect(status().isForbidden());
     }
 
-    /*
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     void testDeleteTagSuccess() throws Exception {
         Long tagId = 10L;
 
@@ -235,7 +229,7 @@ public class TagControllerUnitTest {
     }
 
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     void testDeleteTagNotFound() throws Exception {
         Long tagId = 10L;
 
@@ -245,9 +239,9 @@ public class TagControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
-    */
 
     @Test
+    @WithMockUser(roles = "USER")
     void testDeleteTagAccessDenied() throws Exception {
         Long tagId = 10L;
 

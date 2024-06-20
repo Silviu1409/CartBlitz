@@ -121,7 +121,6 @@ public class CustomerControllerUnitTest {
                 .andExpect(jsonPath("$[0].customerId", is(customerDtoList.get(0).getCustomerId().intValue())));
     }
 
-    /*
     @Test
     @WithMockUser(roles = "ADMIN")
     void testCreateCustomerSuccess() throws Exception {
@@ -150,9 +149,9 @@ public class CustomerControllerUnitTest {
                         .content(objectMapper.writeValueAsString(customerDto)))
                 .andExpect(status().isBadRequest());
     }
-    */
 
     @Test
+    @WithMockUser(roles = "USER")
     void testCreateCustomerAccessDenied() throws Exception {
         Customer customer = new Customer();
         CustomerDto customerDto = new CustomerDto();
@@ -165,7 +164,6 @@ public class CustomerControllerUnitTest {
                 .andExpect(status().isForbidden());
     }
 
-    /*
     @Test
     @WithMockUser(roles = "ADMIN")
     void testUpdateCustomerSuccess() throws Exception {
@@ -194,9 +192,9 @@ public class CustomerControllerUnitTest {
                         .content(objectMapper.writeValueAsString(customerDto)))
                 .andExpect(status().isBadRequest());
     }
-    */
 
     @Test
+    @WithMockUser(roles = "USER")
     void testUpdateCustomerAccessDenied() throws Exception {
         Customer customer = getDummyCustomerOne();
         CustomerDto customerDto = new CustomerDto();
@@ -209,7 +207,6 @@ public class CustomerControllerUnitTest {
                 .andExpect(status().isForbidden());
     }
 
-    /*
     @Test
     @WithMockUser(roles = "ADMIN")
     void testDeleteCustomerSuccess() throws Exception {
@@ -231,9 +228,9 @@ public class CustomerControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
-    */
 
     @Test
+    @WithMockUser(roles = "USER")
     void testDeleteCustomerAccessDenied() throws Exception {
         mockMvc.perform(delete("/customer/id/10")
                         .contentType(MediaType.APPLICATION_JSON))

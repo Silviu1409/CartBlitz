@@ -4,6 +4,7 @@ import com.savian.cartblitz.dto.OrderDto;
 import com.savian.cartblitz.dto.OrderProductDto;
 import com.savian.cartblitz.dto.ProductDto;
 import com.savian.cartblitz.dto.ReviewDto;
+import com.savian.cartblitz.exception.ResourceNotFoundException;
 import com.savian.cartblitz.model.*;
 import com.savian.cartblitz.repository.OrderProductRepository;
 import com.savian.cartblitz.service.CustomerService;
@@ -17,9 +18,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -32,16 +35,18 @@ import java.net.URI;
 import java.security.Principal;
 import java.util.*;
 
+
+@Slf4j
 @Controller
 @Validated
 @RequestMapping("product")
 @Tag(name = "Products",description = "Endpoint manage Products")
 public class ProductController {
-    private ProductService productService;
-    private CustomerService customerService;
-    private OrderService orderService;
-    private OrderProductRepository orderProductRepository;
-    private OrderProductService orderProductService;
+    ProductService productService;
+    CustomerService customerService;
+    OrderService orderService;
+    OrderProductRepository orderProductRepository;
+    OrderProductService orderProductService;
 
     public ProductController(ProductService productService, CustomerService customerService, OrderService orderService, OrderProductRepository orderProductRepository, OrderProductService orderProductService) {
         this.productService = productService;
@@ -53,17 +58,11 @@ public class ProductController {
 
     @GetMapping(produces = { MediaType.APPLICATION_JSON_VALUE })
     @Operation(description = "Showing all info about products including all fields",
-            summary = "Showing all products",
-            responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
-            })
+            summary = "Showing all products")
+    @ApiResponses(value = {
+            @ApiResponse(description = "Success", responseCode = "200"),
+            @ApiResponse(description = "Not Found", responseCode = "404"),
+    })
     public ResponseEntity<List<ProductDto>> GetAllProducts(){
         return ResponseEntity.ok(productService.getAllProducts());
     }
@@ -281,7 +280,8 @@ public class ProductController {
     }
 
     @GetMapping(path = "/filter")
-    @Operation(description = "Filter products from the given category by min price and max price")
+    @Operation(description = "Filter products by min price and max price",
+            summary = "Filter products based on min and max price")
     @ApiResponses(value = {
             @ApiResponse(description = "Success", responseCode = "200"),
             @ApiResponse(description = "Not Found", responseCode = "404"),
@@ -328,6 +328,13 @@ public class ProductController {
     }
 
     @GetMapping("/add-to-cart/{productId}")
+    @Operation(summary = "Add a product to the shopping cart",
+            description = "Adds a product identified by its ID to the authenticated customer's shopping cart.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "302", description = "Product added to cart, redirecting to cart page"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Customer or Product not found")
+    })
     public ResponseEntity<String> addToCart(@PathVariable Long productId, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -374,17 +381,11 @@ public class ProductController {
 
     @GetMapping(path = "/brand/{brand}", produces = { MediaType.APPLICATION_JSON_VALUE })
     @Operation(description = "Showing all info about products from the given brand",
-            summary = "Showing products with from the given brand",
-            responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
-            })
+            summary = "Showing products with from the given brand")
+    @ApiResponses(value = {
+            @ApiResponse(description = "Success", responseCode = "200"),
+            @ApiResponse(description = "Not Found", responseCode = "404"),
+    })
     public ResponseEntity<List<ProductDto>> GetProductsByBrand(
             @PathVariable
             @Parameter(name = "brand", description = "Product brand", example = "Intel", required = true) String brand){
@@ -393,17 +394,11 @@ public class ProductController {
 
     @GetMapping(path = "/priceRange", produces = { MediaType.APPLICATION_JSON_VALUE })
     @Operation(description = "Showing all info about products in the given price range",
-            summary = "Showing products with from the given price range",
-            responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Field validation error",
-                            responseCode = "400"
-                    ),
-            })
+            summary = "Showing products with from the given price range")
+    @ApiResponses(value = {
+            @ApiResponse(description = "Success", responseCode = "200"),
+            @ApiResponse(description = "Not Found", responseCode = "404"),
+    })
     public ResponseEntity<List<ProductDto>> GetProductsByPriceRange(
             @RequestParam(name = "minPrice", required = false, defaultValue = "0.00") BigDecimal minPrice,
             @RequestParam(name = "maxPrice", required = false, defaultValue = "100000000.00") BigDecimal maxPrice){
@@ -414,14 +409,8 @@ public class ProductController {
     @Operation(description = "Showing all info about products with the given tag id",
             summary = "Showing products from the given tag id",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Not Found", responseCode = "404"),
             })
     public ResponseEntity<List<ProductDto>> GetProductsByTagId(
             @PathVariable
@@ -433,18 +422,10 @@ public class ProductController {
     @Operation(description = "Update the stock quantity for a given product",
             summary = "Update stock quantity",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
-                    @ApiResponse(
-                            description = "Field validation error",
-                            responseCode = "400"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Field validation error", responseCode = "400"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Not Found", responseCode = "404")
             })
     public ResponseEntity<Product> UpdateStockQuantity(
             @RequestParam Long productId,
@@ -456,18 +437,10 @@ public class ProductController {
     @Operation(description = "Creating product - all info will be put in",
             summary = "Creating a new product",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "201"
-                    ),
-                    @ApiResponse(
-                            description = "Bad Request - validation error per request",
-                            responseCode = "500"
-                    ),
-                    @ApiResponse(
-                            description = "Field validation error",
-                            responseCode = "400"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "201"),
+                    @ApiResponse(description = "Field validation error", responseCode = "400"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Bad Request - validation error per request", responseCode = "500")
             })
     public ResponseEntity<Product> CreateProduct(
             @Valid @RequestBody ProductDto productDto){
@@ -479,18 +452,11 @@ public class ProductController {
     @Operation(description = "Updating the details of a product with the given id",
             summary = "Updating product with given id",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Product Not Found",
-                            responseCode = "404"
-                    ),
-                    @ApiResponse(
-                            description = "Field validation error",
-                            responseCode = "400"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Field validation error", responseCode = "400"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Product Not Found", responseCode = "404")
+
             })
     public ResponseEntity<Product> UpdateProduct(@PathVariable @Parameter(name = "productId", description = "Product id", example = "1", required = true) Long productId,
                                                    @Valid @RequestBody ProductDto productDto){
@@ -501,17 +467,19 @@ public class ProductController {
     @Operation(description = "Deleting a product with a given id",
             summary = "Deleting a product with a given id",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Product Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Product Not Found", responseCode = "404")
             })
-    public void DeleteProduct(@PathVariable @Parameter(name = "productId",description = "Product id",example = "1",required = true) Long productId) {
-        productService.removeProductById(productId);
+    public ResponseEntity<Void> DeleteProduct(@PathVariable @Parameter(name = "productId",description = "Product id",example = "1",required = true) Long productId) {
+        try {
+            productService.removeProductById(productId);
+            return ResponseEntity.ok().build();
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
     }
 
     public String getReadableCategory(String category){

@@ -33,11 +33,11 @@ public class Customer {
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Order> orders = new ArrayList<>();
 
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Review> reviews = new ArrayList<>();
 
@@ -78,16 +78,6 @@ public class Customer {
                 ", fullName='" + fullName + '\'' +
                 ", orders=" + orders +
                 ", reviews=" + reviews +
-                '}';
-    }
-
-    public String toStringLogin() {
-        return "Customer{" +
-                "customerId=" + customerId +
-                ", username='" + username + '\'' +
-                ", password='" + password + '\'' +
-                ", email='" + email + '\'' +
-                ", fullName='" + fullName + '\'' +
                 '}';
     }
 }

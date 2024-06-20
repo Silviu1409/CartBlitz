@@ -36,8 +36,6 @@ public class OrderProductServiceUnitTest {
     private ProductRepository productRepository;
     @Mock
     private OrderService orderService;
-    @Mock
-    private ProductService productService;
 
     @Test
     public void testGetAllOrderProducts() {

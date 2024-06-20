@@ -35,8 +35,6 @@ public class JpaUserDetailsService implements UserDetailsService {
         else
             throw new UsernameNotFoundException("Username: " + username);
 
-        log.info(user.toStringLogin());
-
         return new org.springframework.security.core.userdetails.User(user.getUsername(),
                 user.getPassword(),user.getEnabled(), user.getAccountNonExpired(),
                 user.getCredentialsNonExpired(),user.getAccountNonLocked(),

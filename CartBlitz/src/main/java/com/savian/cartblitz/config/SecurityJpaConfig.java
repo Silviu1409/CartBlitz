@@ -4,8 +4,10 @@ import com.savian.cartblitz.service.security.JpaUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -21,6 +23,7 @@ public class SecurityJpaConfig {
     public SecurityJpaConfig(JpaUserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
     }
+
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -31,11 +34,11 @@ public class SecurityJpaConfig {
 
         return http
                 .authorizeHttpRequests(auth -> auth
-
-                        .requestMatchers("/", "/home", "/login", "/register", "/categories", "/product**", "/product/**", "/webjars/**", "/resources/**", "/images/**").permitAll()
-                        .requestMatchers("/cart", "/order/complete/**", "/product/add-to-cart/**", "/profile", "/review", "/order/**").hasAuthority("ROLE_USER")
-                        .requestMatchers("/addProduct", "/orderProduct").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers("/orderProduct", "/customer", "/order", "/review", "/tags**", "/warranty").hasRole("ADMIN")
+                        .requestMatchers("/home", "/login", "/register", "/categories", "/webjars/**", "/resources/**", "/images/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/product/**").permitAll()
+                        .requestMatchers("/cart", "/order/complete/**", "/product/add-to-cart/**", "/profile").hasAuthority("ROLE_USER")
+                        .requestMatchers(HttpMethod.GET, "/order/id/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
+                        .requestMatchers("/addProduct", "/product/**", "/orderProduct/**", "/customer/**", "/order/**", "/review/**", "/tag/**", "/warranty/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
                 )
                 .userDetailsService(userDetailsService)
@@ -53,6 +56,7 @@ public class SecurityJpaConfig {
                                 .deleteCookies("JSESSIONID")
                 )
                 .exceptionHandling(ex -> ex.accessDeniedPage("/accessDenied"))
+                .csrf(AbstractHttpConfigurer::disable)
                 .build();
     }
 

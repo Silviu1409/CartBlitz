@@ -44,7 +44,7 @@ public class ReviewControllerUnitTest {
     private ReviewMapper reviewMapper;
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(roles = "ADMIN")
     public void testGetAllReviews() throws Exception {
         List<ReviewDto> reviewDtoList = Arrays.asList(getDummyReviewDtoOne(), getDummyReviewDtoTwo());
 
@@ -58,7 +58,7 @@ public class ReviewControllerUnitTest {
     }
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(roles = "ADMIN")
     public void testGetReviewById() throws Exception {
         ReviewDto reviewDto = getDummyReviewDtoOne();
 
@@ -72,7 +72,7 @@ public class ReviewControllerUnitTest {
     }
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(roles = "ADMIN")
     public void testGetReviewByIdNotFound() throws Exception {
         Long reviewId = 99L;
 
@@ -84,7 +84,7 @@ public class ReviewControllerUnitTest {
     }
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(roles = "ADMIN")
     public void testGetReviewsByCustomerId() throws Exception {
         ReviewDto reviewDtoOne = getDummyReviewDtoOne();
         ReviewDto reviewDtoTwo = getDummyReviewDtoTwo();
@@ -100,7 +100,7 @@ public class ReviewControllerUnitTest {
     }
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(roles = "ADMIN")
     public void testGetReviewsByProductId() throws Exception {
         ReviewDto reviewDtoOne = getDummyReviewDtoOne();
         ReviewDto reviewDtoTwo = getDummyReviewDtoTwo();
@@ -116,7 +116,7 @@ public class ReviewControllerUnitTest {
     }
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(roles = "ADMIN")
     public void testGetReviewsByRating() throws Exception {
         Integer rating = 5;
         List<ReviewDto> reviewDtoList = Arrays.asList(getDummyReviewDtoOne(), getDummyReviewDtoTwo());
@@ -130,9 +130,8 @@ public class ReviewControllerUnitTest {
                 .andExpect(jsonPath("$", hasSize(2)));
     }
 
-    /*
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(roles = "ADMIN")
     public void testCreateReview() throws Exception {
         ReviewDto reviewDto = getDummyReviewDtoOne();
 
@@ -146,7 +145,7 @@ public class ReviewControllerUnitTest {
     }
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(roles = "ADMIN")
     public void testCreateReviewInvalid() throws Exception {
         ReviewDto reviewDto = getDummyReviewDtoOne();
         reviewDto.setRating(0);
@@ -159,9 +158,9 @@ public class ReviewControllerUnitTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
-    */
 
     @Test
+    @WithMockUser(roles = "USER")
     public void testCreateReviewAccessDenied() throws Exception {
         ReviewDto reviewDto = getDummyReviewDtoOne();
         reviewDto.setRating(0);
@@ -175,9 +174,8 @@ public class ReviewControllerUnitTest {
                 .andExpect(status().isForbidden());
     }
 
-    /*
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(roles = "ADMIN")
     public void testUpdateReviewSuccess() throws Exception {
         ReviewDto reviewDto = getDummyReviewDtoOne();
 
@@ -191,7 +189,7 @@ public class ReviewControllerUnitTest {
     }
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(roles = "ADMIN")
     public void testUpdateReviewInvalid() throws Exception {
         ReviewDto reviewDto = getDummyReviewDtoOne();
         reviewDto.setRating(0);
@@ -203,9 +201,9 @@ public class ReviewControllerUnitTest {
                         .content(objectMapper.writeValueAsString(reviewDto)))
                 .andExpect(status().isBadRequest());
     }
-    */
 
     @Test
+    @WithMockUser(roles = "USER")
     public void testUpdateReviewAccessDenied() throws Exception {
         ReviewDto reviewDto = getDummyReviewDtoOne();
         reviewDto.setRating(0);
@@ -218,9 +216,8 @@ public class ReviewControllerUnitTest {
                 .andExpect(status().isForbidden());
     }
 
-    /*
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(roles = "ADMIN")
     public void testDeleteReviewSuccess() throws Exception {
         Long reviewId = 10L;
 
@@ -230,7 +227,7 @@ public class ReviewControllerUnitTest {
     }
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(roles = "ADMIN")
     public void testDeleteReviewNotFound() throws Exception {
         Long reviewId = 10L;
 
@@ -240,9 +237,9 @@ public class ReviewControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
-    */
 
     @Test
+    @WithMockUser(roles = "USER")
     public void testDeleteReviewAccessDenied() throws Exception {
         Long reviewId = 10L;
 

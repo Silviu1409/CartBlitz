@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -17,10 +18,12 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
+
+@Slf4j
 @RestController
 @Validated
 @RequestMapping("customer")
-@Tag(name = "Customers",description = "Endpoint manage Customers")
+@Tag(name = "Customers", description = "Endpoint manage Customers")
 public class CustomerController {
     CustomerService customerService;
 
@@ -32,14 +35,9 @@ public class CustomerController {
     @Operation(description = "Showing all info about customers including all fields",
             summary = "Showing all customers",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Not Found", responseCode = "404")
             })
     public ResponseEntity<List<CustomerDto>> GetAllCustomers(){
         return ResponseEntity.ok(customerService.getAllCustomers());
@@ -49,14 +47,9 @@ public class CustomerController {
     @Operation(description = "Showing all info about a customer with given id",
             summary = "Showing customer with given id",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Not Found", responseCode = "404")
             })
     public ResponseEntity<Optional<Customer>> getCustomerById(
             @PathVariable
@@ -74,14 +67,9 @@ public class CustomerController {
     @Operation(description = "Showing all info about a customer with given username",
             summary = "Showing customer with given username",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Not Found", responseCode = "404")
             })
     public ResponseEntity<Optional<Customer>> getCustomerByUsername(
             @PathVariable
@@ -93,14 +81,9 @@ public class CustomerController {
     @Operation(description = "Showing all info about Customers in ascending order of their full names.",
             summary = "Showing customers alphabetically",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Not Found", responseCode = "404")
             })
     public ResponseEntity<List<CustomerDto>> GetCustomersAscFullName(){
         return ResponseEntity.ok(customerService.getCustomersAscFullName());
@@ -110,14 +93,9 @@ public class CustomerController {
     @Operation(description = "Showing all info about Customers in descending order of their full names.",
             summary = "Showing customers in reverse alphabetical order",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Not Found", responseCode = "404")
             })
     public ResponseEntity<List<CustomerDto>> GetCustomersDescFullName(){
         return ResponseEntity.ok(customerService.getCustomersDescFullName());
@@ -127,18 +105,9 @@ public class CustomerController {
     @Operation(description = "Creating customer - all info will be put in",
             summary = "Creating a new customer",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "201"
-                    ),
-                    @ApiResponse(
-                            description = "Bad Request - validation error per request",
-                            responseCode = "500"
-                    ),
-                    @ApiResponse(
-                            description = "Field validation error",
-                            responseCode = "400"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "201"),
+                    @ApiResponse(description = "Field validation error", responseCode = "400"),
+                    @ApiResponse(description = "Bad Request - validation error per request", responseCode = "500")
             })
     public ResponseEntity<Customer> CreateCustomer(
                 @Valid @RequestBody CustomerDto customerDto){
@@ -150,18 +119,10 @@ public class CustomerController {
     @Operation(description = "Updating the details of a customer with the given id",
             summary = "Updating customer with given id",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Customer Not Found",
-                            responseCode = "404"
-                    ),
-                    @ApiResponse(
-                            description = "Field validation error",
-                            responseCode = "400"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Field validation error", responseCode = "400"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Not Found", responseCode = "404")
             })
     public ResponseEntity<Customer> UpdateCustomer(@PathVariable @Parameter(name = "customerId", description = "Customer id", example = "1", required = true) Long customerId,
                                                    @Valid @RequestBody CustomerDto customerDto){
@@ -172,14 +133,9 @@ public class CustomerController {
     @Operation(description = "Deleting a customer with a given id",
             summary = "Deleting a customer with a given id",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Customer Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Not Found", responseCode = "404")
             })
     public void DeleteCustomer(@PathVariable @Parameter(name = "customerId",description = "Customer id",example = "1",required = true) Long customerId) {
         customerService.removeCustomerById(customerId);

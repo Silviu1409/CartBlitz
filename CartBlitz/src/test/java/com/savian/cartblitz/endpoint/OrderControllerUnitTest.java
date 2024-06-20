@@ -5,7 +5,6 @@ import com.savian.cartblitz.dto.OrderDto;
 import com.savian.cartblitz.exception.OrderNotFoundException;
 import com.savian.cartblitz.mapper.OrderMapper;
 import com.savian.cartblitz.model.Customer;
-import com.savian.cartblitz.model.Order;
 import com.savian.cartblitz.model.OrderStatusEnum;
 import com.savian.cartblitz.service.OrderService;
 import org.junit.jupiter.api.Test;
@@ -45,7 +44,7 @@ public class OrderControllerUnitTest {
     private OrderMapper orderMapper;
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(roles = "ADMIN")
     void getAllOrders() throws Exception {
         OrderDto orderDtoOne = getDummyOrderDtoOne();
         OrderDto orderDtoTwo = getDummyOrderDtoTwo();
@@ -62,7 +61,7 @@ public class OrderControllerUnitTest {
     }
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(roles = "ADMIN")
     void getOrderByIdFound() throws Exception {
         OrderDto orderDto = getDummyOrderDtoOne();
 
@@ -76,7 +75,7 @@ public class OrderControllerUnitTest {
     }
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(roles = "ADMIN")
     void getOrderByIdNotFound() throws Exception {
         when(orderService.getOrderById(99L)).thenReturn(Optional.empty());
 
@@ -88,7 +87,7 @@ public class OrderControllerUnitTest {
     }
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(roles = "ADMIN")
     void getOrdersByCustomerId() throws Exception {
         OrderDto orderDtoOne = getDummyOrderDtoOne();
         OrderDto orderDtoTwo = getDummyOrderDtoTwo();
@@ -105,7 +104,7 @@ public class OrderControllerUnitTest {
     }
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(roles = "ADMIN")
     void getOrdersByStatus() throws Exception {
         OrderDto orderDtoOne = getDummyOrderDtoOne();
         OrderDto orderDtoTwo = getDummyOrderDtoTwo();
@@ -121,7 +120,6 @@ public class OrderControllerUnitTest {
                 .andExpect(jsonPath("$[1].orderId").value(orderDtoTwo.getOrderId()));
     }
 
-    /*
     @Test
     @WithMockUser(roles = "USER")
     void completeOrderFound() throws Exception {
@@ -148,9 +146,9 @@ public class OrderControllerUnitTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.status().isNotFound());
     }
-    */
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void completeOrderAccessDenied() throws Exception {
         OrderDto orderDto = getDummyOrderDtoOne();
 
@@ -163,7 +161,7 @@ public class OrderControllerUnitTest {
     }
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(roles = "ADMIN")
     void modifyTotalAmountSuccess() throws Exception {
         OrderDto orderDto = getDummyOrderDtoOne();
 
@@ -178,9 +176,8 @@ public class OrderControllerUnitTest {
                 .andExpect(jsonPath("$.orderId").value(orderDto.getOrderId()));
     }
 
-    /*
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(roles = "ADMIN")
     void createOrderSuccess() throws Exception {
         OrderDto orderDto = getDummyOrderDtoOne();
 
@@ -196,22 +193,6 @@ public class OrderControllerUnitTest {
 
     @Test
     @WithMockUser(roles = "USER")
-    void updateOrderSuccess() throws Exception {
-        OrderDto orderDto = getDummyOrderDtoOne();
-
-        when(orderService.updateOrder(orderDto.getOrderId(), orderDto.getCustomerId())).thenReturn(orderDto);
-
-        mockMvc.perform(put("/order/id/{orderId}", orderDto.getOrderId())
-                        .param("customerId", "10")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-
-                .andExpect(jsonPath("$.orderId").value(orderDto.getOrderId()));
-    }
-    */
-
-    @Test
     void createOrderAccessDenied() throws Exception {
         OrderDto orderDto = getDummyOrderDtoOne();
 
@@ -223,19 +204,31 @@ public class OrderControllerUnitTest {
                 .andExpect(status().isForbidden());
     }
 
-    /*
     @Test
-    @WithMockUser(roles = "USER")
-    void deleteOrderFound() throws Exception {
-        mockMvc.perform(delete("/order/id/{orderId}", 10)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+    @WithMockUser(roles = "ADMIN")
+    void updateOrderSuccess() throws Exception {
+        OrderDto orderDto = getDummyOrderDtoOne();
 
-        verify(orderService, times(1)).removeOrderById(10L);
+        when(orderService.updateOrder(orderDto.getOrderId(), orderDto.getCustomerId())).thenReturn(orderDto);
+
+        mockMvc.perform(put("/order/id/{orderId}", orderDto.getOrderId())
+                        .param("customerId", "10")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.orderId").value(orderDto.getOrderId()));
     }
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(roles = "ADMIN")
+    void deleteOrderFound() throws Exception {
+        mockMvc.perform(delete("/order/id/{orderId}", 10L)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteOrderNotFound() throws Exception {
         doThrow(new OrderNotFoundException(99L)).when(orderService).removeOrderById(99L);
 
@@ -243,23 +236,13 @@ public class OrderControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
-    */
 
     @Test
+    @WithMockUser(roles = "USER")
     void deleteOrderAccessDenied() throws Exception {
         mockMvc.perform(delete("/order/id/{orderId}", 10)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
-    }
-
-    private Order getDummyOrderOne(){
-        Order order = new Order();
-        order.setOrderId(10L);
-        order.setCustomer(getDummyCustomer());
-        order.setTotalAmount(BigDecimal.valueOf(0));
-        order.setStatus(OrderStatusEnum.CART);
-        order.setOrderDate(Timestamp.valueOf(LocalDateTime.now()));
-        return order;
     }
 
     private OrderDto getDummyOrderDtoOne(){

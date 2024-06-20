@@ -1,6 +1,7 @@
 package com.savian.cartblitz.controller;
 
 import com.savian.cartblitz.dto.ReviewDto;
+import com.savian.cartblitz.exception.ResourceNotFoundException;
 import com.savian.cartblitz.service.ReviewService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -8,8 +9,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
@@ -19,6 +23,8 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
+
+@Slf4j
 @Controller
 @Validated
 @RequestMapping("review")
@@ -34,14 +40,9 @@ public class ReviewController {
     @Operation(description = "Showing all info about reviews including all fields",
             summary = "Showing all reviews",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Not Found", responseCode = "404")
             })
     public ResponseEntity<List<ReviewDto>> GetAllReviews(){
         return ResponseEntity.ok(reviewService.getAllReviews());
@@ -51,14 +52,9 @@ public class ReviewController {
     @Operation(description = "Showing all info about a review with given id",
             summary = "Showing review with given id",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Not Found", responseCode = "404")
             })
     public ResponseEntity<Optional<ReviewDto>> GetReviewById(
             @PathVariable
@@ -76,14 +72,9 @@ public class ReviewController {
     @Operation(description = "Showing all info about reviews written by the customer with the given id",
             summary = "Showing reviews from the given customer",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Not Found", responseCode = "404")
             })
     public ResponseEntity<List<ReviewDto>> GetReviewsByCustomerId(
             @PathVariable
@@ -95,14 +86,9 @@ public class ReviewController {
     @Operation(description = "Showing all info about reviews for the product with the given id",
             summary = "Showing reviews with the given product",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Not Found", responseCode = "404")
             })
     public ResponseEntity<List<ReviewDto>> GetReviewsByProductId(
             @PathVariable
@@ -114,14 +100,9 @@ public class ReviewController {
     @Operation(description = "Showing all info about reviews with the given rating",
             summary = "Showing reviews with the given rating",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Not Found", responseCode = "404")
             })
     public ResponseEntity<List<ReviewDto>> GetReviewsByRating(
             @PathVariable
@@ -133,18 +114,10 @@ public class ReviewController {
     @Operation(description = "Creating review - all info will be put in",
             summary = "Creating a new review",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "201"
-                    ),
-                    @ApiResponse(
-                            description = "Bad Request - validation error per request",
-                            responseCode = "500"
-                    ),
-                    @ApiResponse(
-                            description = "Field validation error",
-                            responseCode = "400"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "201"),
+                    @ApiResponse(description = "Field validation error", responseCode = "400"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Bad Request - validation error per request", responseCode = "500")
             })
     public ResponseEntity<ReviewDto> CreateReview(
             @Valid @RequestBody ReviewDto reviewDto){
@@ -157,8 +130,9 @@ public class ReviewController {
             summary = "Creating a new review")
     @ApiResponses(value = {
             @ApiResponse(description = "Success", responseCode = "201"),
-            @ApiResponse(description = "Bad Request - validation error per request", responseCode = "500"),
             @ApiResponse(description = "Field validation error", responseCode = "400"),
+            @ApiResponse(description = "Access denied", responseCode = "403"),
+            @ApiResponse(description = "Bad Request - validation error per request", responseCode = "500")
     })
     public String  CreateReviewRedirectToProduct(
             @Valid @ModelAttribute("review") ReviewDto reviewDto, BindingResult result){
@@ -175,18 +149,11 @@ public class ReviewController {
     @Operation(description = "Updating the details of a review with the given id",
             summary = "Updating review with given id",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Review Not Found",
-                            responseCode = "404"
-                    ),
-                    @ApiResponse(
-                            description = "Field validation error",
-                            responseCode = "400"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Field validation error", responseCode = "400"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Review Not Found", responseCode = "404")
+
             })
     public ResponseEntity<ReviewDto> UpdateReview(@PathVariable @Parameter(name = "reviewId", description = "Review id", example = "1", required = true) Long reviewId,
                                                  @Valid @RequestBody ReviewDto reviewDto){
@@ -197,16 +164,18 @@ public class ReviewController {
     @Operation(description = "Deleting a review with a given id",
             summary = "Deleting a review with a given id",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Review Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Not Found", responseCode = "404")
             })
-    public void DeleteReview(@PathVariable @Parameter(name = "reviewId",description = "Review id",example = "1",required = true) Long reviewId) {
-        reviewService.removeReviewById(reviewId);
+    public ResponseEntity<Void> DeleteReview(@PathVariable @Parameter(name = "reviewId",description = "Review id",example = "1",required = true) Long reviewId) {
+        try {
+            reviewService.removeReviewById(reviewId);
+            return ResponseEntity.ok().build();
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
     }
 }

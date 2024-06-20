@@ -119,8 +119,6 @@ public class OrderProductControllerUnitTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$[0].orderProductId").value(orderProductId));
     }
-
-    /*
     @Test
     @WithMockUser(roles = "ADMIN")
     void testCreateOrderProductSuccess() throws Exception {
@@ -153,9 +151,9 @@ public class OrderProductControllerUnitTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
-    */
 
     @Test
+    @WithMockUser(roles = "USER")
     public void testCreateOrderProductAccessDenied() throws Exception {
         OrderProductDto orderProductDto = getDummyOrderProductDtoOne();
         orderProductDto.setQuantity(0);
@@ -164,16 +162,16 @@ public class OrderProductControllerUnitTest {
 
         mockMvc.perform(MockMvcRequestBuilders.post("/orderProduct")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
                         .content("{\"orderId\": 10, \"productId\": 10}")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.status().isForbidden());
     }
 
-    /*
     @Test
     @WithMockUser(roles = "ADMIN")
     public void testDeleteOrderProductSuccess() throws Exception {
-        mockMvc.perform(delete("/orderProduct/orderId/1/productId/1")
+        mockMvc.perform(delete("/orderProduct/orderId/{orderId}/productId/{productId}", 1L, 1L)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
@@ -187,9 +185,9 @@ public class OrderProductControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
-    */
 
     @Test
+    @WithMockUser(roles = "USER")
     public void testDeleteOrderProductAccessDenied() throws Exception {
         mockMvc.perform(delete("/orderProduct/orderId/1/productId/1")
                         .contentType(MediaType.APPLICATION_JSON))

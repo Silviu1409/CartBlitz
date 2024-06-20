@@ -1,7 +1,9 @@
 package com.savian.cartblitz.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.ArrayList;
@@ -11,6 +13,8 @@ import java.util.Objects;
 @Setter
 @Getter
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "tag")
 public class Tag {
     @Id
@@ -22,8 +26,6 @@ public class Tag {
 
     @ManyToMany(mappedBy = "tags")
     private List<Product> products = new ArrayList<>();
-
-    public Tag() {}
 
     public Tag(String name) {
         this.name = name;

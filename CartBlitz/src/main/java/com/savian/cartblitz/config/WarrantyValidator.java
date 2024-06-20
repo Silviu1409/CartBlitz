@@ -2,6 +2,7 @@ package com.savian.cartblitz.config;
 
 import com.savian.cartblitz.model.Product;
 import com.savian.cartblitz.model.Warranty;
+import jakarta.annotation.Nonnull;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
@@ -10,12 +11,12 @@ import org.springframework.validation.Validator;
 public class WarrantyValidator implements Validator {
 
     @Override
-    public boolean supports(Class<?> clazz) {
+    public boolean supports(@Nonnull Class<?> clazz) {
         return Product.class.equals(clazz);
     }
 
     @Override
-    public void validate(Object target, Errors errors) {
+    public void validate(@Nonnull Object target, @Nonnull Errors errors) {
         Product product = (Product) target;
         Warranty warranty = product.getWarranty();
 

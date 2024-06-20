@@ -1,7 +1,9 @@
 package com.savian.cartblitz.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.io.Serializable;
@@ -9,6 +11,8 @@ import java.util.Objects;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Embeddable
 public class OrderProductId implements Serializable {
     @Column(name = "order_id")
@@ -16,13 +20,6 @@ public class OrderProductId implements Serializable {
 
     @Column(name = "product_id")
     private Long productId;
-
-    public OrderProductId() {}
-
-    public OrderProductId(Long orderId, Long productId) {
-        this.orderId = orderId;
-        this.productId = productId;
-    }
 
     @Override
     public boolean equals(Object o) {

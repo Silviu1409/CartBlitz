@@ -1,6 +1,7 @@
 package com.savian.cartblitz.controller;
 
 import com.savian.cartblitz.dto.OrderDto;
+import com.savian.cartblitz.exception.ResourceNotFoundException;
 import com.savian.cartblitz.mapper.OrderMapper;
 import com.savian.cartblitz.model.Order;
 import com.savian.cartblitz.model.OrderStatusEnum;
@@ -13,9 +14,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
@@ -23,10 +26,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.net.URI;
-import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
+
+@Slf4j
 @Controller
 @Validated
 @RequestMapping("order")
@@ -44,14 +48,9 @@ public class OrderController {
     @Operation(description = "Showing all info about orders including all fields",
             summary = "Showing all orders",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Not Found", responseCode = "404")
             })
     public ResponseEntity<List<OrderDto>> GetAllOrders(){
         return ResponseEntity.ok(orderService.getAllOrders());
@@ -61,14 +60,9 @@ public class OrderController {
     @Operation(description = "Showing all info about a order with given id",
             summary = "Showing order with given id",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Not Found", responseCode = "404")
             })
     public ResponseEntity<Optional<OrderDto>> GetOrderById(
             @PathVariable @Parameter(name = "orderId", description = "Order id", example = "1", required = true) Long orderId){
@@ -86,9 +80,11 @@ public class OrderController {
             summary = "Showing order with given id")
     @ApiResponses(value = {
             @ApiResponse(description = "Success", responseCode = "200"),
-            @ApiResponse(description = "Not Found", responseCode = "404"),
+            @ApiResponse(description = "Access denied", responseCode = "403"),
+            @ApiResponse(description = "Not Found", responseCode = "404")
     })
-    public String viewOrder(@PathVariable Long orderId, Model model, Principal principal){
+    public String viewOrder(@PathVariable @Parameter(name = "orderId", description = "Order id", example = "1", required = true) Long orderId,
+                            Model model){
         if (orderId == null) {
             return "redirect:/";
         }
@@ -96,7 +92,6 @@ public class OrderController {
 
         if(orderOptional.isEmpty()){
             return "redirect:/";
-
         }
         Order order = orderMapper.orderDtoToOrder(orderOptional.get());
 
@@ -109,14 +104,9 @@ public class OrderController {
     @Operation(description = "Showing all info about orders written by the customer with the given id",
             summary = "Showing orders from the given customer",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Not Found", responseCode = "404")
             })
     public ResponseEntity<List<OrderDto>> GetOrdersByCustomerId(
             @PathVariable @Parameter(name = "customerId", description = "Customer id", example = "1", required = true) Long customerId){
@@ -127,14 +117,9 @@ public class OrderController {
     @Operation(description = "Showing all info about orders with the given status",
             summary = "Showing orders with the given status",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Not Found", responseCode = "404")
             })
     public ResponseEntity<List<OrderDto>> GetOrdersByStatus(
             @PathVariable @Parameter(name = "status", description = "Status", required = true) OrderStatusEnum status){
@@ -146,6 +131,7 @@ public class OrderController {
             summary = "Complete order with given ID",
             responses = {
                     @ApiResponse(description = "Order completed successfully", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Order not found", responseCode = "404")
             })
     public ResponseEntity<Void> completeOrder(@PathVariable Long orderId) {
@@ -160,18 +146,10 @@ public class OrderController {
     @Operation(description = "Modify the total amount for the order with the given id",
             summary = "Modify total amount for order with given id",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
-                    @ApiResponse(
-                            description = "Bad Request - validation error per request",
-                            responseCode = "500"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Not Found", responseCode = "404"),
+                    @ApiResponse(description = "Bad Request - validation error per request", responseCode = "500")
             })
     public ResponseEntity<OrderDto> ModifyTotalAmount(
             @RequestParam Long orderId,
@@ -184,18 +162,10 @@ public class OrderController {
     @Operation(description = "Creating order for given customer id",
             summary = "Creating a new order",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "201"
-                    ),
-                    @ApiResponse(
-                            description = "Bad Request - validation error per request",
-                            responseCode = "500"
-                    ),
-                    @ApiResponse(
-                            description = "Field validation error",
-                            responseCode = "400"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "201"),
+                    @ApiResponse(description = "Field validation error", responseCode = "400"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Bad Request - validation error per request", responseCode = "500")
             })
     public ResponseEntity<OrderDto> CreateOrder(
             @Valid @RequestParam Long customerId){
@@ -207,21 +177,13 @@ public class OrderController {
     @Operation(description = "Updating the details of a order with the given id",
             summary = "Updating order with given id",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Order Not Found",
-                            responseCode = "404"
-                    ),
-                    @ApiResponse(
-                            description = "Field validation error",
-                            responseCode = "400"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Field validation error",responseCode = "400"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Order Not Found", responseCode = "404")
             })
     public ResponseEntity<OrderDto> UpdateOrder(@PathVariable @Parameter(name = "orderId", description = "Order id", example = "1", required = true) Long orderId,
-                                             @Parameter Long customerId){
+                                                @Parameter(name = "customerId", description = "Customer id", example = "1", required = true) Long customerId){
         return ResponseEntity.ok(orderService.updateOrder(orderId, customerId));
     }
 
@@ -229,16 +191,18 @@ public class OrderController {
     @Operation(description = "Deleting a order with a given id",
             summary = "Deleting a order with a given id",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Order Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+                    @ApiResponse(description = "Not Found", responseCode = "404")
             })
-    public void DeleteOrder(@PathVariable @Parameter(name = "orderId",description = "Order id",example = "1",required = true) Long orderId) {
-        orderService.removeOrderById(orderId);
+    public ResponseEntity<Void> deleteOrder(@PathVariable @Parameter(name = "orderId", description = "Order id", example = "1", required = true) Long orderId) {
+        try {
+            orderService.removeOrderById(orderId);
+            return ResponseEntity.ok().build();
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
     }
 }

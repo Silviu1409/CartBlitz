@@ -38,9 +38,8 @@ public class WarrantyControllerUnitTest {
     @MockBean
     private WarrantyMapper warrantyMapper;
 
-    /*
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     public void testGetAllWarranties() throws Exception {
         List<WarrantyDto> warrantyDtoList = Arrays.asList(getDummyWarrantyDtoOne(), getDummyWarrantyDtoTwo());
 
@@ -52,10 +51,9 @@ public class WarrantyControllerUnitTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$", hasSize(2)));
     }
-    */
 
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     public void testGetWarrantyById() throws Exception {
         WarrantyDto warrantyDto = getDummyWarrantyDtoOne();
 
@@ -69,7 +67,7 @@ public class WarrantyControllerUnitTest {
     }
 
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     public void testGetWarrantyByIdNotFound() throws Exception {
         Long warrantyId = 99L;
 
@@ -80,9 +78,8 @@ public class WarrantyControllerUnitTest {
                 .andExpect(status().isNotFound());
     }
 
-    /*
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     public void testCreateWarranty() throws Exception {
         WarrantyDto warrantyDto = getDummyWarrantyDtoOne();
 
@@ -96,7 +93,7 @@ public class WarrantyControllerUnitTest {
     }
 
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     public void testCreateWarrantyInvalid() throws Exception {
         WarrantyDto warrantyDto = getDummyWarrantyDtoOne();
         warrantyDto.setDurationMonths(-1);
@@ -109,9 +106,9 @@ public class WarrantyControllerUnitTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
-    */
 
     @Test
+    @WithMockUser(roles = "USER")
     public void testCreateWarrantyAccessDenied() throws Exception {
         WarrantyDto warrantyDto = getDummyWarrantyDtoOne();
         warrantyDto.setDurationMonths(-1);
@@ -125,9 +122,8 @@ public class WarrantyControllerUnitTest {
                 .andExpect(status().isForbidden());
     }
 
-    /*
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     public void testUpdateWarrantySuccess() throws Exception {
         WarrantyDto warrantyDto = getDummyWarrantyDtoOne();
 
@@ -141,7 +137,7 @@ public class WarrantyControllerUnitTest {
     }
 
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     public void testUpdateWarrantyInvalid() throws Exception {
         WarrantyDto warrantyDto = getDummyWarrantyDtoOne();
         warrantyDto.setDurationMonths(-1);
@@ -153,9 +149,9 @@ public class WarrantyControllerUnitTest {
                         .content(objectMapper.writeValueAsString(warrantyDto)))
                 .andExpect(status().isBadRequest());
     }
-    */
 
     @Test
+    @WithMockUser(roles = "USER")
     public void testUpdateWarrantyAccessDenied() throws Exception {
         WarrantyDto warrantyDto = getDummyWarrantyDtoOne();
         warrantyDto.setDurationMonths(-1);
@@ -168,9 +164,8 @@ public class WarrantyControllerUnitTest {
                 .andExpect(status().isForbidden());
     }
 
-    /*
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     public void testDeleteWarrantySuccess() throws Exception {
         Long warrantyId = 10L;
 
@@ -180,7 +175,7 @@ public class WarrantyControllerUnitTest {
     }
 
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     public void testDeleteWarrantyNotFound() throws Exception {
         Long warrantyId = 10L;
 
@@ -190,9 +185,9 @@ public class WarrantyControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
-    */
 
     @Test
+    @WithMockUser(roles = "USER")
     public void testDeleteWarrantyAccessDenied() throws Exception {
         Long warrantyId = 10L;
 

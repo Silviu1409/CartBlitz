@@ -2,7 +2,9 @@ package com.savian.cartblitz.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
@@ -13,6 +15,8 @@ import java.util.Objects;
 @Setter
 @Getter
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "`order`")
 public class Order {
     @Id
@@ -36,8 +40,6 @@ public class Order {
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderProduct> orderProducts;
-
-    public Order() {}
 
     @Override
     public boolean equals(Object o) {

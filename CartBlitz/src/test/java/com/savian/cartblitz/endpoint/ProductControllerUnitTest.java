@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -59,7 +60,6 @@ public class ProductControllerUnitTest {
     void testGetProductByIdSuccess() throws Exception {
         Long productId = 10L;
         Product product = getDummyProductOne();
-        ProductDto productDto = getDummyProductDtoOne();
 
         when(productService.getProductById(productId)).thenReturn(Optional.of(product));
 
@@ -164,8 +164,8 @@ public class ProductControllerUnitTest {
                 .andExpect(jsonPath("$[0].productId").value(productOne.getProductId()));
     }
 
-    /*
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testUpdateStockQuantity() throws Exception {
         Long productId = 10L;
         Integer stockQuantity = 50;
@@ -183,6 +183,23 @@ public class ProductControllerUnitTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
+    void testUpdateStockQuantityAccessDenied() throws Exception {
+        Long productId = 10L;
+        Integer stockQuantity = 50;
+        Product product = getDummyProductOne();
+
+        when(productService.updateStockQuantity(productId, stockQuantity)).thenReturn(product);
+
+        mockMvc.perform(patch("/product")
+                        .param("productId", String.valueOf(productId))
+                        .param("stockQuantity", String.valueOf(stockQuantity))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
     void testCreateProductSuccess() throws Exception {
         Product product = getDummyProductOne();
         ProductDto productDto = getDummyProductDtoOne();
@@ -197,6 +214,20 @@ public class ProductControllerUnitTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
+    void testCreateProductAccessDenied() throws Exception {
+        ProductDto productDto = getDummyProductDtoOne();
+        productDto.setStockQuantity(-1);
+
+        mockMvc.perform(post("/product")
+                        .content(objectMapper.writeValueAsString(productDto))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
     void testCreateProductInvalid() throws Exception {
         ProductDto productDto = getDummyProductDtoOne();
         productDto.setStockQuantity(-1);
@@ -209,6 +240,7 @@ public class ProductControllerUnitTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testUpdateProductSuccess() throws Exception {
         ProductDto productDto = getDummyProductDtoOne();
         Product product = getDummyProductOne();
@@ -223,6 +255,7 @@ public class ProductControllerUnitTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testUpdateProductInvalid() throws Exception {
         Long productId = 10L;
         ProductDto productDto = getDummyProductDtoOne();
@@ -236,6 +269,7 @@ public class ProductControllerUnitTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testDeleteProductSuccess() throws Exception {
         Long productId = 10L;
 
@@ -245,6 +279,7 @@ public class ProductControllerUnitTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testDeleteProductNotFound() throws Exception {
         Long productId = 10L;
 
@@ -254,7 +289,14 @@ public class ProductControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
-    */
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void testDeleteProductAccessDenied() throws Exception {
+        mockMvc.perform(delete("/product/id/{productId}", 10L)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
 
     private Product getDummyProductOne(){
         Product product = new Product();
