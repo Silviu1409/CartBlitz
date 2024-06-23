@@ -14,7 +14,6 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +27,9 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 
 @Slf4j
@@ -56,7 +58,7 @@ public class OrderProductController {
         orderProducts.forEach(this::addLinks);
 
         return ResponseEntity.ok(CollectionModel.of(orderProducts,
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderProductController.class).GetAllOrderProducts()).withSelfRel()));
+                linkTo(methodOn(OrderProductController.class).GetAllOrderProducts()).withSelfRel()));
     }
 
     @GetMapping(path = "/orderId/{orderId}/productId/{productId}", produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -225,7 +227,7 @@ public class OrderProductController {
     }
 
     private void addLinks(OrderProduct orderProduct) {
-        orderProduct.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderProductController.class).GetOrderProductById(orderProduct.getOrder().getOrderId(), orderProduct.getProduct().getProductId())).withSelfRel());
-        orderProduct.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderProductController.class).GetAllOrderProducts()).withRel("orderProducts"));
+        orderProduct.add(linkTo(methodOn(OrderProductController.class).GetOrderProductById(orderProduct.getOrder().getOrderId(), orderProduct.getProduct().getProductId())).withSelfRel());
+        orderProduct.add(linkTo(methodOn(OrderProductController.class).GetAllOrderProducts()).withRel("orderProducts"));
     }
 }

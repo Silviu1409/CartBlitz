@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +24,9 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 
 @Slf4j
@@ -53,12 +55,12 @@ public class CustomerController {
         List<EntityModel<CustomerDto>> customerModels = customers.stream()
                 .map(customer -> {
                     EntityModel<CustomerDto> customerModel = EntityModel.of(customer);
-                    customerModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CustomerController.class).getCustomerById(customer.getCustomerId())).withSelfRel());
+                    customerModel.add(linkTo(methodOn(CustomerController.class).getCustomerById(customer.getCustomerId())).withSelfRel());
                     return customerModel;
                 })
                 .collect(Collectors.toList());
 
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CustomerController.class).getAllCustomers()).withSelfRel();
+        Link selfLink = linkTo(methodOn(CustomerController.class).getAllCustomers()).withSelfRel();
 
         CollectionModel<EntityModel<CustomerDto>> collectionModel = CollectionModel.of(customerModels, selfLink);
 
@@ -81,8 +83,8 @@ public class CustomerController {
                 if (optionalCustomer.isPresent()) {
                     CustomerDto customer = optionalCustomer.get();
                     EntityModel<CustomerDto> customerModel = EntityModel.of(customer);
-                    customerModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CustomerController.class).getCustomerById(customerId)).withSelfRel());
-                    customerModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CustomerController.class).getAllCustomers()).withRel("all-customers"));
+                    customerModel.add(linkTo(methodOn(CustomerController.class).getCustomerById(customerId)).withSelfRel());
+                    customerModel.add(linkTo(methodOn(CustomerController.class).getAllCustomers()).withRel("all-customers"));
 
                     return ResponseEntity.ok(customerModel);
                 } else {
@@ -106,8 +108,8 @@ public class CustomerController {
         if (optionalCustomer.isPresent()) {
             CustomerDto customer = optionalCustomer.get();
             EntityModel<CustomerDto> customerModel = EntityModel.of(customer);
-            customerModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CustomerController.class).getCustomerByUsername(username)).withSelfRel());
-            customerModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CustomerController.class).getAllCustomers()).withRel("all-customers"));
+            customerModel.add(linkTo(methodOn(CustomerController.class).getCustomerByUsername(username)).withSelfRel());
+            customerModel.add(linkTo(methodOn(CustomerController.class).getAllCustomers()).withRel("all-customers"));
 
             return ResponseEntity.ok(customerModel);
         } else {
@@ -127,8 +129,8 @@ public class CustomerController {
         List<CustomerDto> customers = customerService.getCustomersAscFullName();
         CollectionModel<CustomerDto> resource = CollectionModel.of(customers);
 
-        resource.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CustomerController.class).getCustomersAscFullName()).withSelfRel());
-        resource.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CustomerController.class).getCustomersDescFullName()).withRel("desc"));
+        resource.add(linkTo(methodOn(CustomerController.class).getCustomersAscFullName()).withSelfRel());
+        resource.add(linkTo(methodOn(CustomerController.class).getCustomersDescFullName()).withRel("desc"));
 
         return ResponseEntity.ok(resource);
     }
@@ -145,8 +147,8 @@ public class CustomerController {
         List<CustomerDto> customers = customerService.getCustomersDescFullName();
         CollectionModel<CustomerDto> resource = CollectionModel.of(customers);
 
-        resource.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CustomerController.class).getCustomersDescFullName()).withSelfRel());
-        resource.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CustomerController.class).getCustomersAscFullName()).withRel("asc"));
+        resource.add(linkTo(methodOn(CustomerController.class).getCustomersDescFullName()).withSelfRel());
+        resource.add(linkTo(methodOn(CustomerController.class).getCustomersAscFullName()).withRel("asc"));
 
         return ResponseEntity.ok(resource);
     }
@@ -164,10 +166,10 @@ public class CustomerController {
         Customer customer = customerService.saveCustomer(customerDto);
         EntityModel<Customer> resource = EntityModel.of(customer);
 
-        resource.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CustomerController.class).createCustomer(customerDto)).withSelfRel());
-        resource.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CustomerController.class).getCustomerById(customer.getCustomerId())).withRel("customer"));
-        resource.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CustomerController.class).getCustomersAscFullName()).withRel("customersAsc"));
-        resource.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CustomerController.class).getCustomersDescFullName()).withRel("customersDesc"));
+        resource.add(linkTo(methodOn(CustomerController.class).createCustomer(customerDto)).withSelfRel());
+        resource.add(linkTo(methodOn(CustomerController.class).getCustomerById(customer.getCustomerId())).withRel("customer"));
+        resource.add(linkTo(methodOn(CustomerController.class).getCustomersAscFullName()).withRel("customersAsc"));
+        resource.add(linkTo(methodOn(CustomerController.class).getCustomersDescFullName()).withRel("customersDesc"));
 
         return ResponseEntity.created(URI.create("/customer/" + customer.getCustomerId())).body(resource);
     }
@@ -186,10 +188,10 @@ public class CustomerController {
         Customer updatedCustomer = customerService.updateCustomer(customerId, customerDto);
         EntityModel<Customer> resource = EntityModel.of(updatedCustomer);
 
-        resource.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CustomerController.class).updateCustomer(customerId, customerDto)).withSelfRel());
-        resource.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CustomerController.class).getCustomerById(customerId)).withRel("customer"));
-        resource.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CustomerController.class).getCustomersAscFullName()).withRel("customersAsc"));
-        resource.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CustomerController.class).getCustomersDescFullName()).withRel("customersDesc"));
+        resource.add(linkTo(methodOn(CustomerController.class).updateCustomer(customerId, customerDto)).withSelfRel());
+        resource.add(linkTo(methodOn(CustomerController.class).getCustomerById(customerId)).withRel("customer"));
+        resource.add(linkTo(methodOn(CustomerController.class).getCustomersAscFullName()).withRel("customersAsc"));
+        resource.add(linkTo(methodOn(CustomerController.class).getCustomersDescFullName()).withRel("customersDesc"));
 
         return ResponseEntity.ok(resource);
     }

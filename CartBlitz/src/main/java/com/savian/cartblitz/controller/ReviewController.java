@@ -12,7 +12,6 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +25,9 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 
 @Slf4j
@@ -52,12 +54,12 @@ public class ReviewController {
         List<ReviewDto> reviews = reviewService.getAllReviews();
         List<EntityModel<ReviewDto>> reviewModels = reviews.stream()
                 .map(review -> EntityModel.of(review,
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewById(review.getReviewId())).withSelfRel(),
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetAllReviews()).withRel("all-reviews")))
+                        linkTo(methodOn(ReviewController.class).GetReviewById(review.getReviewId())).withSelfRel(),
+                        linkTo(methodOn(ReviewController.class).GetAllReviews()).withRel("all-reviews")))
                 .collect(Collectors.toList());
 
         CollectionModel<EntityModel<ReviewDto>> collectionModel = CollectionModel.of(reviewModels);
-        collectionModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetAllReviews()).withSelfRel());
+        collectionModel.add(linkTo(methodOn(ReviewController.class).GetAllReviews()).withSelfRel());
 
         return ResponseEntity.ok(collectionModel);
     }
@@ -76,8 +78,8 @@ public class ReviewController {
         Optional<ReviewDto> optionalReview = reviewService.getReviewById(reviewId);
 
         return optionalReview.map(review -> ResponseEntity.ok(EntityModel.of(review,
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewById(reviewId)).withSelfRel(),
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetAllReviews()).withRel("all-reviews"))))
+                        linkTo(methodOn(ReviewController.class).GetReviewById(reviewId)).withSelfRel(),
+                        linkTo(methodOn(ReviewController.class).GetAllReviews()).withRel("all-reviews"))))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -95,12 +97,12 @@ public class ReviewController {
         List<ReviewDto> reviews = reviewService.getReviewsByCustomerId(customerId);
         List<EntityModel<ReviewDto>> reviewModels = reviews.stream()
                 .map(review -> EntityModel.of(review,
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewById(review.getReviewId())).withSelfRel(),
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewsByCustomerId(customerId)).withRel("reviews-by-customer")))
+                        linkTo(methodOn(ReviewController.class).GetReviewById(review.getReviewId())).withSelfRel(),
+                        linkTo(methodOn(ReviewController.class).GetReviewsByCustomerId(customerId)).withRel("reviews-by-customer")))
                 .collect(Collectors.toList());
 
         CollectionModel<EntityModel<ReviewDto>> collectionModel = CollectionModel.of(reviewModels);
-        collectionModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewsByCustomerId(customerId)).withSelfRel());
+        collectionModel.add(linkTo(methodOn(ReviewController.class).GetReviewsByCustomerId(customerId)).withSelfRel());
 
         return ResponseEntity.ok(collectionModel);
     }
@@ -119,12 +121,12 @@ public class ReviewController {
         List<ReviewDto> reviews = reviewService.getReviewsByProductId(productId);
         List<EntityModel<ReviewDto>> reviewModels = reviews.stream()
                 .map(review -> EntityModel.of(review,
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewById(review.getReviewId())).withSelfRel(),
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewsByProductId(productId)).withRel("reviews-by-product")))
+                        linkTo(methodOn(ReviewController.class).GetReviewById(review.getReviewId())).withSelfRel(),
+                        linkTo(methodOn(ReviewController.class).GetReviewsByProductId(productId)).withRel("reviews-by-product")))
                 .collect(Collectors.toList());
 
         CollectionModel<EntityModel<ReviewDto>> collectionModel = CollectionModel.of(reviewModels);
-        collectionModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewsByProductId(productId)).withSelfRel());
+        collectionModel.add(linkTo(methodOn(ReviewController.class).GetReviewsByProductId(productId)).withSelfRel());
 
         return ResponseEntity.ok(collectionModel);
     }
@@ -143,12 +145,12 @@ public class ReviewController {
         List<ReviewDto> reviews = reviewService.getReviewsByRating(rating);
         List<EntityModel<ReviewDto>> reviewModels = reviews.stream()
                 .map(review -> EntityModel.of(review,
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewById(review.getReviewId())).withSelfRel(),
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewsByRating(rating)).withRel("reviews-by-rating")))
+                        linkTo(methodOn(ReviewController.class).GetReviewById(review.getReviewId())).withSelfRel(),
+                        linkTo(methodOn(ReviewController.class).GetReviewsByRating(rating)).withRel("reviews-by-rating")))
                 .collect(Collectors.toList());
 
         CollectionModel<EntityModel<ReviewDto>> collectionModel = CollectionModel.of(reviewModels);
-        collectionModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewsByRating(rating)).withSelfRel());
+        collectionModel.add(linkTo(methodOn(ReviewController.class).GetReviewsByRating(rating)).withSelfRel());
 
         return ResponseEntity.ok(collectionModel);
     }
@@ -166,8 +168,8 @@ public class ReviewController {
             @Valid @RequestBody ReviewDto reviewDto){
         ReviewDto review = reviewService.saveReview(reviewDto);
         EntityModel<ReviewDto> reviewModel = EntityModel.of(review,
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewById(review.getReviewId())).withSelfRel(),
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).CreateReview(reviewDto)).withRel("create-review"));
+                linkTo(methodOn(ReviewController.class).GetReviewById(review.getReviewId())).withSelfRel(),
+                linkTo(methodOn(ReviewController.class).CreateReview(reviewDto)).withRel("create-review"));
 
         return ResponseEntity.created(URI.create("/review/" + review.getReviewId())).body(reviewModel);
     }
@@ -205,8 +207,8 @@ public class ReviewController {
                                                                @Valid @RequestBody ReviewDto reviewDto){
         ReviewDto updatedReview = reviewService.updateReview(reviewId, reviewDto);
         EntityModel<ReviewDto> reviewModel = EntityModel.of(updatedReview,
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewById(reviewId)).withSelfRel(),
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).updateReview(reviewId, reviewDto)).withRel("update-review"));
+                linkTo(methodOn(ReviewController.class).GetReviewById(reviewId)).withSelfRel(),
+                linkTo(methodOn(ReviewController.class).updateReview(reviewId, reviewDto)).withRel("update-review"));
 
         return ResponseEntity.ok(reviewModel);
     }

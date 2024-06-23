@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +36,9 @@ import java.net.URI;
 import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 
 @Slf4j
@@ -74,13 +76,13 @@ public class ProductController {
 
         List<EntityModel<ProductDto>> productModels = productDtos.stream()
                 .map(productDto -> {
-                    Link selfLink = WebMvcLinkBuilder.linkTo(ProductController.class).slash("id").slash(productDto.getProductId()).withSelfRel();
-                    Link categoryLink = WebMvcLinkBuilder.linkTo(ProductController.class).slash("category").slash(productDto.getCategory()).withRel("category");
+                    Link selfLink = linkTo(ProductController.class).slash("id").slash(productDto.getProductId()).withSelfRel();
+                    Link categoryLink = linkTo(ProductController.class).slash("category").slash(productDto.getCategory()).withRel("category");
                     return EntityModel.of(productDto, selfLink, categoryLink);
                 })
                 .collect(Collectors.toList());
 
-        Link selfLink = WebMvcLinkBuilder.linkTo(ProductController.class).withSelfRel();
+        Link selfLink = linkTo(ProductController.class).withSelfRel();
         CollectionModel<EntityModel<ProductDto>> model = CollectionModel.of(productModels, selfLink);
 
         return ResponseEntity.ok(model);
@@ -102,8 +104,8 @@ public class ProductController {
             ProductDto productDto = productMapper.productToProductDto(optionalProduct.get());
 
             EntityModel<ProductDto> model = EntityModel.of(productDto);
-            model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(productId)).withSelfRel());
-            model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductsByCategoryApi(productDto.getCategory())).withRel("productsInCategory"));
+            model.add(linkTo(methodOn(ProductController.class).getProductByIdApi(productId)).withSelfRel());
+            model.add(linkTo(methodOn(ProductController.class).getProductsByCategoryApi(productDto.getCategory())).withRel("productsInCategory"));
 
             return ResponseEntity.ok(model);
         } else {
@@ -175,11 +177,11 @@ public class ProductController {
         for (ProductDto product : products) {
             Long productId = product.getProductId();
             EntityModel<ProductDto> model = EntityModel.of(product);
-            model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(productId)).withSelfRel());
+            model.add(linkTo(methodOn(ProductController.class).getProductByIdApi(productId)).withSelfRel());
             productModels.add(model);
         }
 
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductsByCategoryApi(category)).withSelfRel();
+        Link selfLink = linkTo(methodOn(ProductController.class).getProductsByCategoryApi(category)).withSelfRel();
 
         CollectionModel<EntityModel<ProductDto>> collectionModel = CollectionModel.of(productModels, selfLink);
 
@@ -231,12 +233,12 @@ public class ProductController {
         List<EntityModel<ProductDto>> productModels = sortedProducts.stream()
                 .map(product -> {
                     EntityModel<ProductDto> model = EntityModel.of(product);
-                    model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
-                    model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).sortProductsByCategoryApi(category, sortBy, sortOrder)).withRel("sorted-products"));
+                    model.add(linkTo(methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+                    model.add(linkTo(methodOn(ProductController.class).sortProductsByCategoryApi(category, sortBy, sortOrder)).withRel("sorted-products"));
                     return model;
                 }).toList();
 
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).sortProductsByCategoryApi(category, sortBy, sortOrder)).withSelfRel();
+        Link selfLink = linkTo(methodOn(ProductController.class).sortProductsByCategoryApi(category, sortBy, sortOrder)).withSelfRel();
         CollectionModel<EntityModel<ProductDto>> collectionModel = CollectionModel.of(productModels, selfLink);
 
         return ResponseEntity.ok(collectionModel);
@@ -309,12 +311,12 @@ public class ProductController {
         List<EntityModel<ProductDto>> productModels = filteredProducts.stream()
                 .map(product -> {
                     EntityModel<ProductDto> model = EntityModel.of(product);
-                    model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
-                    model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).filterProductsByCategoryApi(category, minPrice, maxPrice)).withRel("filtered-products"));
+                    model.add(linkTo(methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+                    model.add(linkTo(methodOn(ProductController.class).filterProductsByCategoryApi(category, minPrice, maxPrice)).withRel("filtered-products"));
                     return model;
                 }).toList();
 
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).filterProductsByCategoryApi(category, minPrice, maxPrice)).withSelfRel();
+        Link selfLink = linkTo(methodOn(ProductController.class).filterProductsByCategoryApi(category, minPrice, maxPrice)).withSelfRel();
         CollectionModel<EntityModel<ProductDto>> collectionModel = CollectionModel.of(productModels, selfLink);
 
         return ResponseEntity.ok(collectionModel);
@@ -383,12 +385,12 @@ public class ProductController {
         List<EntityModel<ProductDto>> productModels = products.stream()
                 .map(product -> {
                     EntityModel<ProductDto> model = EntityModel.of(product);
-                    model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
-                    model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).searchProductsApi(searchQuery)).withRel("search-results"));
+                    model.add(linkTo(methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+                    model.add(linkTo(methodOn(ProductController.class).searchProductsApi(searchQuery)).withRel("search-results"));
                     return model;
                 }).toList();
 
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).searchProductsApi(searchQuery)).withSelfRel();
+        Link selfLink = linkTo(methodOn(ProductController.class).searchProductsApi(searchQuery)).withSelfRel();
         CollectionModel<EntityModel<ProductDto>> collectionModel = CollectionModel.of(productModels, selfLink);
 
         return ResponseEntity.ok(collectionModel);
@@ -434,12 +436,12 @@ public class ProductController {
         List<EntityModel<ProductDto>> productModels = sortedProducts.stream()
                 .map(product -> {
                     EntityModel<ProductDto> model = EntityModel.of(product);
-                    model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
-                    model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).sortProductsApi(sortBy, sortOrder)).withRel("sorted-products"));
+                    model.add(linkTo(methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+                    model.add(linkTo(methodOn(ProductController.class).sortProductsApi(sortBy, sortOrder)).withRel("sorted-products"));
                     return model;
                 }).toList();
 
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).sortProductsApi(sortBy, sortOrder)).withSelfRel();
+        Link selfLink = linkTo(methodOn(ProductController.class).sortProductsApi(sortBy, sortOrder)).withSelfRel();
         CollectionModel<EntityModel<ProductDto>> collectionModel = CollectionModel.of(productModels, selfLink);
 
         return ResponseEntity.ok(collectionModel);
@@ -509,12 +511,12 @@ public class ProductController {
         List<EntityModel<ProductDto>> productModels = filteredProducts.stream()
                 .map(product -> {
                     EntityModel<ProductDto> model = EntityModel.of(product);
-                    model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
-                    model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).filterProductsApi(minPrice, maxPrice)).withRel("filtered-products"));
+                    model.add(linkTo(methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+                    model.add(linkTo(methodOn(ProductController.class).filterProductsApi(minPrice, maxPrice)).withRel("filtered-products"));
                     return model;
                 }).toList();
 
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).filterProductsApi(minPrice, maxPrice)).withSelfRel();
+        Link selfLink = linkTo(methodOn(ProductController.class).filterProductsApi(minPrice, maxPrice)).withSelfRel();
         CollectionModel<EntityModel<ProductDto>> collectionModel = CollectionModel.of(productModels, selfLink);
 
         return ResponseEntity.ok(collectionModel);
@@ -634,13 +636,13 @@ public class ProductController {
 
         for (ProductDto product : products) {
             EntityModel<ProductDto> productModel = EntityModel.of(product);
-            productModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
-            productModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).GetProductsByBrand(brand)).withRel("products-by-brand"));
+            productModel.add(linkTo(methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+            productModel.add(linkTo(methodOn(ProductController.class).GetProductsByBrand(brand)).withRel("products-by-brand"));
             productModels.add(productModel);
         }
 
         CollectionModel<EntityModel<ProductDto>> collectionModel = CollectionModel.of(productModels);
-        collectionModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).GetProductsByBrand(brand)).withSelfRel());
+        collectionModel.add(linkTo(methodOn(ProductController.class).GetProductsByBrand(brand)).withSelfRel());
 
         return ResponseEntity.ok(collectionModel);
     }
@@ -660,13 +662,13 @@ public class ProductController {
 
         for (ProductDto product : products) {
             EntityModel<ProductDto> productModel = EntityModel.of(product);
-            productModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
-            productModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).GetProductsByPriceRange(minPrice, maxPrice)).withRel("products-by-price-range"));
+            productModel.add(linkTo(methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+            productModel.add(linkTo(methodOn(ProductController.class).GetProductsByPriceRange(minPrice, maxPrice)).withRel("products-by-price-range"));
             productModels.add(productModel);
         }
 
         CollectionModel<EntityModel<ProductDto>> collectionModel = CollectionModel.of(productModels);
-        collectionModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).GetProductsByPriceRange(minPrice, maxPrice)).withSelfRel());
+        collectionModel.add(linkTo(methodOn(ProductController.class).GetProductsByPriceRange(minPrice, maxPrice)).withSelfRel());
 
         return ResponseEntity.ok(collectionModel);
     }
@@ -686,13 +688,13 @@ public class ProductController {
 
         for (ProductDto product : products) {
             EntityModel<ProductDto> productModel = EntityModel.of(product);
-            productModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
-            productModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).GetProductsByTagId(tagId)).withRel("products-by-tag"));
+            productModel.add(linkTo(methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+            productModel.add(linkTo(methodOn(ProductController.class).GetProductsByTagId(tagId)).withRel("products-by-tag"));
             productModels.add(productModel);
         }
 
         CollectionModel<EntityModel<ProductDto>> collectionModel = CollectionModel.of(productModels);
-        collectionModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).GetProductsByTagId(tagId)).withSelfRel());
+        collectionModel.add(linkTo(methodOn(ProductController.class).GetProductsByTagId(tagId)).withSelfRel());
 
         return ResponseEntity.ok(collectionModel);
     }
@@ -711,7 +713,7 @@ public class ProductController {
             @RequestParam Integer stockQuantity) {
         Product product = productService.updateStockQuantity(productId, stockQuantity);
         EntityModel<Product> productModel = EntityModel.of(product);
-        productModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+        productModel.add(linkTo(methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
 
         return ResponseEntity.ok(productModel);
     }
@@ -729,8 +731,8 @@ public class ProductController {
             @Valid @RequestBody ProductDto productDto) {
         Product product = productService.saveProduct(productDto);
         EntityModel<Product> productModel = EntityModel.of(product);
-        productModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
-        productModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).CreateProduct(productDto)).withRel("create-product"));
+        productModel.add(linkTo(methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+        productModel.add(linkTo(methodOn(ProductController.class).CreateProduct(productDto)).withRel("create-product"));
 
         return ResponseEntity.created(URI.create("/product/" + product.getProductId())).body(productModel);
     }
@@ -748,7 +750,7 @@ public class ProductController {
                                                               @Valid @RequestBody ProductDto productDto) {
         Product product = productService.updateProduct(productId, productDto);
         EntityModel<Product> productModel = EntityModel.of(product);
-        productModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+        productModel.add(linkTo(methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
 
         return ResponseEntity.ok(productModel);
     }

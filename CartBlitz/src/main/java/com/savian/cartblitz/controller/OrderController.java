@@ -17,7 +17,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +31,9 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 
 @Slf4j
@@ -61,13 +63,13 @@ public class OrderController {
 
         List<EntityModel<OrderDto>> orderResources = orders.stream()
                 .map(order -> EntityModel.of(order,
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetOrderById(order.getOrderId())).withRel("orderDetails"),
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetOrdersByCustomerId(order.getCustomerId())).withRel("customerOrders")
+                        linkTo(methodOn(OrderController.class).GetOrderById(order.getOrderId())).withRel("orderDetails"),
+                        linkTo(methodOn(OrderController.class).GetOrdersByCustomerId(order.getCustomerId())).withRel("customerOrders")
                 ))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(CollectionModel.of(orderResources,
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetAllOrders()).withSelfRel()));
+                linkTo(methodOn(OrderController.class).GetAllOrders()).withSelfRel()));
     }
 
     @GetMapping(path = "/id/{orderId}", produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -85,9 +87,9 @@ public class OrderController {
         if (optionalOrder.isPresent()) {
             OrderDto order = optionalOrder.get();
             return ResponseEntity.ok(EntityModel.of(order,
-                    WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetOrderById(orderId)).withSelfRel(),
-                    WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetOrdersByCustomerId(order.getCustomerId())).withRel("customerOrders"),
-                    WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetAllOrders()).withRel("allOrders")
+                    linkTo(methodOn(OrderController.class).GetOrderById(orderId)).withSelfRel(),
+                    linkTo(methodOn(OrderController.class).GetOrdersByCustomerId(order.getCustomerId())).withRel("customerOrders"),
+                    linkTo(methodOn(OrderController.class).GetAllOrders()).withRel("allOrders")
             ));
         } else {
             return ResponseEntity.notFound().build();
@@ -133,14 +135,14 @@ public class OrderController {
 
         List<EntityModel<OrderDto>> orderResources = orders.stream()
                 .map(order -> EntityModel.of(order,
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetOrderById(order.getOrderId())).withRel("orderDetails"),
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetOrdersByCustomerId(customerId)).withSelfRel(),
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetAllOrders()).withRel("allOrders")
+                        linkTo(methodOn(OrderController.class).GetOrderById(order.getOrderId())).withRel("orderDetails"),
+                        linkTo(methodOn(OrderController.class).GetOrdersByCustomerId(customerId)).withSelfRel(),
+                        linkTo(methodOn(OrderController.class).GetAllOrders()).withRel("allOrders")
                 ))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(CollectionModel.of(orderResources,
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetOrdersByCustomerId(customerId)).withSelfRel()));
+                linkTo(methodOn(OrderController.class).GetOrdersByCustomerId(customerId)).withSelfRel()));
     }
 
     @GetMapping(path = "/status/{status}", produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -157,15 +159,15 @@ public class OrderController {
 
         List<EntityModel<OrderDto>> orderResources = orders.stream()
                 .map(order -> EntityModel.of(order,
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetOrderById(order.getOrderId())).withRel("orderDetails"),
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetOrdersByCustomerId(order.getCustomerId())).withRel("customerOrders"),
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetOrdersByStatus(status)).withSelfRel(),
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetAllOrders()).withRel("allOrders")
+                        linkTo(methodOn(OrderController.class).GetOrderById(order.getOrderId())).withRel("orderDetails"),
+                        linkTo(methodOn(OrderController.class).GetOrdersByCustomerId(order.getCustomerId())).withRel("customerOrders"),
+                        linkTo(methodOn(OrderController.class).GetOrdersByStatus(status)).withSelfRel(),
+                        linkTo(methodOn(OrderController.class).GetAllOrders()).withRel("allOrders")
                 ))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(CollectionModel.of(orderResources,
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetOrdersByStatus(status)).withSelfRel()));
+                linkTo(methodOn(OrderController.class).GetOrdersByStatus(status)).withSelfRel()));
     }
 
     @PostMapping(path = "/complete/{orderId}")
@@ -200,8 +202,8 @@ public class OrderController {
         OrderDto updatedOrder = orderService.modifyTotalAmount(orderId, amount);
 
         return ResponseEntity.ok(EntityModel.of(updatedOrder,
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetOrderById(orderId)).withRel("orderDetails"),
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetAllOrders()).withRel("allOrders")
+                linkTo(methodOn(OrderController.class).GetOrderById(orderId)).withRel("orderDetails"),
+                linkTo(methodOn(OrderController.class).GetAllOrders()).withRel("allOrders")
         ));
     }
 
@@ -220,9 +222,9 @@ public class OrderController {
 
         return ResponseEntity.created(URI.create("/order/" + createdOrder.getOrderId()))
                 .body(EntityModel.of(createdOrder,
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetOrderById(createdOrder.getOrderId())).withRel("orderDetails"),
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetOrdersByCustomerId(createdOrder.getCustomerId())).withRel("customerOrders"),
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetAllOrders()).withRel("allOrders")
+                        linkTo(methodOn(OrderController.class).GetOrderById(createdOrder.getOrderId())).withRel("orderDetails"),
+                        linkTo(methodOn(OrderController.class).GetOrdersByCustomerId(createdOrder.getCustomerId())).withRel("customerOrders"),
+                        linkTo(methodOn(OrderController.class).GetAllOrders()).withRel("allOrders")
                 ));
     }
 
@@ -241,8 +243,8 @@ public class OrderController {
         OrderDto updatedOrder = orderService.updateOrder(orderId, customerId);
 
         return ResponseEntity.ok(EntityModel.of(updatedOrder,
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetOrderById(orderId)).withRel("orderDetails"),
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(OrderController.class).GetAllOrders()).withRel("allOrders")
+                linkTo(methodOn(OrderController.class).GetOrderById(orderId)).withRel("orderDetails"),
+                linkTo(methodOn(OrderController.class).GetAllOrders()).withRel("allOrders")
         ));
     }
 

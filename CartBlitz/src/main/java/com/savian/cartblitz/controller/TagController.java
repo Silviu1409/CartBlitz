@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +23,9 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 
 @Slf4j
@@ -51,10 +53,10 @@ public class TagController {
 
         List<EntityModel<TagDto>> tagModels = tagDtos.stream()
                 .map(tagDto -> EntityModel.of(tagDto,
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TagController.class).GetTagById(tagDto.getTagId())).withSelfRel()))
+                        linkTo(methodOn(TagController.class).GetTagById(tagDto.getTagId())).withSelfRel()))
                 .collect(Collectors.toList());
 
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TagController.class).GetAllTags()).withSelfRel();
+        Link selfLink = linkTo(methodOn(TagController.class).GetAllTags()).withSelfRel();
         CollectionModel<EntityModel<TagDto>> model = CollectionModel.of(tagModels, selfLink);
 
         return ResponseEntity.ok(model);
@@ -75,7 +77,7 @@ public class TagController {
 
         return optionalTag.map(tagDto ->
                         ResponseEntity.ok(EntityModel.of(tagDto,
-                                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TagController.class).GetTagById(tagId)).withSelfRel())))
+                                linkTo(methodOn(TagController.class).GetTagById(tagId)).withSelfRel())))
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -94,7 +96,7 @@ public class TagController {
 
         return optionalTag.map(tagDto ->
                         ResponseEntity.ok(EntityModel.of(tagDto,
-                                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TagController.class).GetTagByName(tagName)).withSelfRel())))
+                                linkTo(methodOn(TagController.class).GetTagByName(tagName)).withSelfRel())))
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -113,10 +115,10 @@ public class TagController {
 
         List<EntityModel<TagDto>> tagModels = tagDtos.stream()
                 .map(tagDto -> EntityModel.of(tagDto,
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TagController.class).GetTagById(tagDto.getTagId())).withSelfRel()))
+                        linkTo(methodOn(TagController.class).GetTagById(tagDto.getTagId())).withSelfRel()))
                 .collect(Collectors.toList());
 
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TagController.class).GetTagsByProductId(productId)).withSelfRel();
+        Link selfLink = linkTo(methodOn(TagController.class).GetTagsByProductId(productId)).withSelfRel();
         CollectionModel<EntityModel<TagDto>> model = CollectionModel.of(tagModels, selfLink);
 
         return ResponseEntity.ok(model);
@@ -137,7 +139,7 @@ public class TagController {
 
         return ResponseEntity.created(URI.create("/tag/" + createdTag.getTagId()))
                 .body(EntityModel.of(createdTag,
-                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TagController.class).GetTagById(createdTag.getTagId())).withSelfRel()));
+                        linkTo(methodOn(TagController.class).GetTagById(createdTag.getTagId())).withSelfRel()));
     }
 
     @PutMapping(path = "/id/{tagId}", produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -156,7 +158,7 @@ public class TagController {
         TagDto updatedTag = tagService.updateTag(tagId, tagDto);
 
         return ResponseEntity.ok(EntityModel.of(updatedTag,
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TagController.class).GetTagById(tagId)).withSelfRel()));
+                linkTo(methodOn(TagController.class).GetTagById(tagId)).withSelfRel()));
     }
 
     @DeleteMapping(path = "/id/{tagId}")
