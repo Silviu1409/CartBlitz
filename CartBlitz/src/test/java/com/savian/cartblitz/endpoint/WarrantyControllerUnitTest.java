@@ -49,7 +49,15 @@ public class WarrantyControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$", hasSize(2)));
+                .andExpect(jsonPath("$._embedded.warrantyDtoList", hasSize(2)));
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    public void testGetAllWarrantiesAccessDenied() throws Exception {
+        mockMvc.perform(get("/warranty")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -64,6 +72,16 @@ public class WarrantyControllerUnitTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.warrantyId", is(warrantyDto.getWarrantyId().intValue())));
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    public void testGetWarrantyByIdAccessDenied() throws Exception {
+        WarrantyDto warrantyDto = getDummyWarrantyDtoOne();
+
+        mockMvc.perform(get("/warranty/id/{warrantyId}", warrantyDto.getWarrantyId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
     }
 
     @Test

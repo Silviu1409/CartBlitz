@@ -25,6 +25,7 @@ import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
+
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("mysql")
@@ -48,20 +49,20 @@ public class CustomerControllerUnitTest {
 
         when(customerService.getAllCustomers()).thenReturn(customerDtoList);
 
-        mockMvc.perform(get("/customer")
-                        .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/customer").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].customerId", is(customerDtoList.get(0).getCustomerId().intValue())));
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$._embedded.customerDtoList", hasSize(2)))
+                .andExpect(jsonPath("$._embedded.customerDtoList[0].customerId").value(customerDtoList.get(0).getCustomerId()))
+                .andExpect(jsonPath("$._embedded.customerDtoList[1].customerId").value(customerDtoList.get(1).getCustomerId()));
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void testGetCustomerByIdFound() throws Exception {
-        Customer customer = getDummyCustomerOne();
         CustomerDto customerDto = getDummyCustomerDtoOne();
 
-        when(customerService.getCustomerById(any())).thenReturn(Optional.of(customer));
+        when(customerService.getCustomerById(any())).thenReturn(Optional.of(customerDto));
 
         mockMvc.perform(get("/customer/id/10")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -82,10 +83,9 @@ public class CustomerControllerUnitTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void testGetCustomerByUsername() throws Exception {
-        Customer customer = getDummyCustomerOne();
         CustomerDto customerDto = getDummyCustomerDtoOne();
 
-        when(customerService.getCustomerByUsername(any())).thenReturn(Optional.of(customer));
+        when(customerService.getCustomerByUsername(any())).thenReturn(Optional.of(customerDto));
 
         mockMvc.perform(get("/customer/username/testUser")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -100,25 +100,27 @@ public class CustomerControllerUnitTest {
 
         when(customerService.getCustomersAscFullName()).thenReturn(customerDtoList);
 
-        mockMvc.perform(get("/customer/asc")
-                        .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/customer/asc").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].customerId", is(customerDtoList.get(0).getCustomerId().intValue())));
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$._embedded.customerDtoList", hasSize(2)))
+                .andExpect(jsonPath("$._embedded.customerDtoList[0].customerId").value(customerDtoList.get(0).getCustomerId()))
+                .andExpect(jsonPath("$._embedded.customerDtoList[1].customerId").value(customerDtoList.get(1).getCustomerId()));
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void testGetCustomersDescFullName() throws Exception {
-        List<CustomerDto> customerDtoList = Arrays.asList(getDummyCustomerDtoOne(), getDummyCustomerDtoTwo());
+        List<CustomerDto> customerDtoList = Arrays.asList(getDummyCustomerDtoTwo(), getDummyCustomerDtoOne());
 
         when(customerService.getCustomersDescFullName()).thenReturn(customerDtoList);
 
-        mockMvc.perform(get("/customer/desc")
-                        .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/customer/desc").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].customerId", is(customerDtoList.get(0).getCustomerId().intValue())));
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$._embedded.customerDtoList", hasSize(2)))
+                .andExpect(jsonPath("$._embedded.customerDtoList[0].customerId").value(customerDtoList.get(0).getCustomerId()))
+                .andExpect(jsonPath("$._embedded.customerDtoList[1].customerId").value(customerDtoList.get(1).getCustomerId()));
     }
 
     @Test

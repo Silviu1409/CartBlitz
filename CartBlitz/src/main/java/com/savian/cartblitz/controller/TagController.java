@@ -9,6 +9,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -41,8 +46,18 @@ public class TagController {
                     @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Not Found", responseCode = "404")
             })
-    public ResponseEntity<List<TagDto>> GetAllTags(){
-        return ResponseEntity.ok(tagService.getAllTags());
+    public ResponseEntity<CollectionModel<EntityModel<TagDto>>> GetAllTags() {
+        List<TagDto> tagDtos = tagService.getAllTags();
+
+        List<EntityModel<TagDto>> tagModels = tagDtos.stream()
+                .map(tagDto -> EntityModel.of(tagDto,
+                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TagController.class).GetTagById(tagDto.getTagId())).withSelfRel()))
+                .collect(Collectors.toList());
+
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TagController.class).GetAllTags()).withSelfRel();
+        CollectionModel<EntityModel<TagDto>> model = CollectionModel.of(tagModels, selfLink);
+
+        return ResponseEntity.ok(model);
     }
 
     @GetMapping(path = "/id/{tagId}", produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -53,16 +68,15 @@ public class TagController {
                     @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Not Found", responseCode = "404")
             })
-    public ResponseEntity<Optional<TagDto>> GetTagById(
+    public ResponseEntity<EntityModel<TagDto>> GetTagById(
             @PathVariable
-            @Parameter(name = "tagId", description = "Tag id", example = "1", required = true) Long tagId){
+            @Parameter(name = "tagId", description = "Tag id", example = "1", required = true) Long tagId) {
         Optional<TagDto> optionalTag = tagService.getTagById(tagId);
 
-        if (optionalTag.isPresent()) {
-            return ResponseEntity.ok(optionalTag);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return optionalTag.map(tagDto ->
+                        ResponseEntity.ok(EntityModel.of(tagDto,
+                                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TagController.class).GetTagById(tagId)).withSelfRel())))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping(path = "/name/{tagName}", produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -73,16 +87,15 @@ public class TagController {
                     @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Not Found", responseCode = "404")
             })
-    public ResponseEntity<Optional<TagDto>> GetTagByName(
+    public ResponseEntity<EntityModel<TagDto>> GetTagByName(
             @PathVariable
-            @Parameter(name = "tagName", description = "Tag name", example = "Tag name", required = true) String tagName){
+            @Parameter(name = "tagName", description = "Tag name", example = "Tag name", required = true) String tagName) {
         Optional<TagDto> optionalTag = tagService.getTagByName(tagName);
 
-        if (optionalTag.isPresent()) {
-            return ResponseEntity.ok(optionalTag);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return optionalTag.map(tagDto ->
+                        ResponseEntity.ok(EntityModel.of(tagDto,
+                                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TagController.class).GetTagByName(tagName)).withSelfRel())))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping(path = "/product/{productId}", produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -93,13 +106,23 @@ public class TagController {
                     @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Not Found", responseCode = "404")
             })
-    public ResponseEntity<List<TagDto>> GetTagsByProductId(
+    public ResponseEntity<CollectionModel<EntityModel<TagDto>>> GetTagsByProductId(
             @PathVariable
-            @Parameter(name = "productId", description = "Product id", example = "1", required = true) Long productId){
-        return ResponseEntity.ok(tagService.getTagsByProductId(productId));
+            @Parameter(name = "productId", description = "Product id", example = "1", required = true) Long productId) {
+        List<TagDto> tagDtos = tagService.getTagsByProductId(productId);
+
+        List<EntityModel<TagDto>> tagModels = tagDtos.stream()
+                .map(tagDto -> EntityModel.of(tagDto,
+                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TagController.class).GetTagById(tagDto.getTagId())).withSelfRel()))
+                .collect(Collectors.toList());
+
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TagController.class).GetTagsByProductId(productId)).withSelfRel();
+        CollectionModel<EntityModel<TagDto>> model = CollectionModel.of(tagModels, selfLink);
+
+        return ResponseEntity.ok(model);
     }
 
-    @PostMapping(consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = {MediaType.APPLICATION_JSON_VALUE })
+    @PostMapping(consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
     @Operation(description = "Creating tag - all info will be put in",
             summary = "Creating a new tag",
             responses = {
@@ -108,10 +131,13 @@ public class TagController {
                     @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Bad Request - validation error per request", responseCode = "500")
             })
-    public ResponseEntity<TagDto> CreateTag(
-            @Valid @RequestBody TagDto tagDto){
-        TagDto tag = tagService.saveTag(tagDto);
-        return ResponseEntity.created(URI.create("/tag/" + tag.getTagId())).body(tag);
+    public ResponseEntity<EntityModel<TagDto>> CreateTag(
+            @Valid @RequestBody TagDto tagDto) {
+        TagDto createdTag = tagService.saveTag(tagDto);
+
+        return ResponseEntity.created(URI.create("/tag/" + createdTag.getTagId()))
+                .body(EntityModel.of(createdTag,
+                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TagController.class).GetTagById(createdTag.getTagId())).withSelfRel()));
     }
 
     @PutMapping(path = "/id/{tagId}", produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -123,9 +149,14 @@ public class TagController {
                     @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Tag Not Found", responseCode = "404")
             })
-    public ResponseEntity<TagDto> UpdateTag(@PathVariable @Parameter(name = "tagId", description = "Tag id", example = "1", required = true) Long tagId,
-                                            @Valid @RequestBody TagDto tagDto){
-        return ResponseEntity.ok(tagService.updateTag(tagId, tagDto));
+    public ResponseEntity<EntityModel<TagDto>> UpdateTag(
+            @PathVariable
+            @Parameter(name = "tagId", description = "Tag id", example = "1", required = true) Long tagId,
+            @Valid @RequestBody TagDto tagDto) {
+        TagDto updatedTag = tagService.updateTag(tagId, tagDto);
+
+        return ResponseEntity.ok(EntityModel.of(updatedTag,
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TagController.class).GetTagById(tagId)).withSelfRel()));
     }
 
     @DeleteMapping(path = "/id/{tagId}")

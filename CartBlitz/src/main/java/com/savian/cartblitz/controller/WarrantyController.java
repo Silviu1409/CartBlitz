@@ -9,6 +9,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +22,10 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 
 @Slf4j
@@ -41,8 +48,18 @@ public class WarrantyController {
                     @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Not Found", responseCode = "404")
             })
-    public ResponseEntity<List<WarrantyDto>> GetAllWarranties(){
-        return ResponseEntity.ok(warrantyService.getAllWarranties());
+    public ResponseEntity<CollectionModel<EntityModel<WarrantyDto>>> GetAllWarranties(){
+        List<WarrantyDto> warrantyDtos = warrantyService.getAllWarranties();
+
+        List<EntityModel<WarrantyDto>> warrantyModels = warrantyDtos.stream()
+                .map(warrantyDto -> EntityModel.of(warrantyDto,
+                        linkTo(methodOn(WarrantyController.class).GetWarrantyById(warrantyDto.getWarrantyId())).withSelfRel()))
+                .collect(Collectors.toList());
+
+        Link selfLink = linkTo(methodOn(WarrantyController.class).GetAllWarranties()).withSelfRel();
+        CollectionModel<EntityModel<WarrantyDto>> model = CollectionModel.of(warrantyModels, selfLink);
+
+        return ResponseEntity.ok(model);
     }
 
     @GetMapping(path = "/id/{warrantyId}", produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -53,19 +70,18 @@ public class WarrantyController {
                     @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Not Found", responseCode = "404")
             })
-    public ResponseEntity<Optional<WarrantyDto>> GetWarrantyById(
+    public ResponseEntity<EntityModel<WarrantyDto>> GetWarrantyById(
             @PathVariable
             @Parameter(name = "warrantyId", description = "Warranty id", example = "1", required = true) Long warrantyId){
         Optional<WarrantyDto> optionalWarranty = warrantyService.getWarrantyById(warrantyId);
 
-        if (optionalWarranty.isPresent()) {
-            return ResponseEntity.ok(optionalWarranty);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return optionalWarranty.map(warrantyDto ->
+                        ResponseEntity.ok(EntityModel.of(warrantyDto,
+                                linkTo(methodOn(WarrantyController.class).GetWarrantyById(warrantyId)).withSelfRel())))
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping(consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = {MediaType.APPLICATION_JSON_VALUE })
+    @PostMapping(consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
     @Operation(description = "Creating warranty - all info will be put in",
             summary = "Creating a new warranty",
             responses = {
@@ -74,10 +90,13 @@ public class WarrantyController {
                     @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Bad Request - validation error per request", responseCode = "500")
             })
-    public ResponseEntity<WarrantyDto> CreateWarranty(
+    public ResponseEntity<EntityModel<WarrantyDto>> CreateWarranty(
             @Valid @RequestBody WarrantyDto warrantyDto){
-        WarrantyDto warranty = warrantyService.saveWarranty(warrantyDto);
-        return ResponseEntity.created(URI.create("/warranty/" + warranty.getWarrantyId())).body(warranty);
+        WarrantyDto createdWarranty = warrantyService.saveWarranty(warrantyDto);
+
+        return ResponseEntity.created(URI.create("/warranty/" + createdWarranty.getWarrantyId()))
+                .body(EntityModel.of(createdWarranty,
+                        linkTo(methodOn(WarrantyController.class).GetWarrantyById(createdWarranty.getWarrantyId())).withSelfRel()));
     }
 
     @PutMapping(path = "/id/{warrantyId}", produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -89,9 +108,14 @@ public class WarrantyController {
                     @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Warranty Not Found", responseCode = "404")
             })
-    public ResponseEntity<WarrantyDto> UpdateWarranty(@PathVariable @Parameter(name = "warrantyId", description = "Warranty id", example = "1", required = true) Long warrantyId,
-                                                      @Valid @RequestBody WarrantyDto warrantyDto){
-        return ResponseEntity.ok(warrantyService.updateWarranty(warrantyId, warrantyDto));
+    public ResponseEntity<EntityModel<WarrantyDto>> UpdateWarranty(
+            @PathVariable
+            @Parameter(name = "warrantyId", description = "Warranty id", example = "1", required = true) Long warrantyId,
+            @Valid @RequestBody WarrantyDto warrantyDto) {
+        WarrantyDto updatedWarranty = warrantyService.updateWarranty(warrantyId, warrantyDto);
+
+        return ResponseEntity.ok(EntityModel.of(updatedWarranty,
+                linkTo(methodOn(WarrantyController.class).GetWarrantyById(warrantyId)).withSelfRel()));
     }
 
     @DeleteMapping(path = "/id/{warrantyId}")

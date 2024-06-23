@@ -42,6 +42,7 @@ public class ProductControllerUnitTest {
     private ProductMapper productMapper;
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetAllProducts() throws Exception {
         List<ProductDto> productDtoList = Arrays.asList(getDummyProductDtoOne(), getDummyProductDtoTwo());
 
@@ -51,19 +52,18 @@ public class ProductControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.size()", is(productDtoList.size())))
-                .andExpect(jsonPath("$[0].name", is(productDtoList.get(0).getName())))
-                .andExpect(jsonPath("$[1].name", is(productDtoList.get(1).getName())));
+                .andExpect(jsonPath("$._embedded.productDtoList.size()", is(productDtoList.size())))
+                .andExpect(jsonPath("$._embedded.productDtoList[0].name", is(productDtoList.get(0).getName())))
+                .andExpect(jsonPath("$._embedded.productDtoList[1].name", is(productDtoList.get(1).getName())));
     }
 
     @Test
     void testGetProductByIdSuccess() throws Exception {
-        Long productId = 10L;
         Product product = getDummyProductOne();
 
-        when(productService.getProductById(productId)).thenReturn(Optional.of(product));
+        when(productService.getProductById(product.getProductId())).thenReturn(Optional.of(product));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/product/id/{productId}", productId)
+        mockMvc.perform(MockMvcRequestBuilders.get("/product/id/{productId}", product.getProductId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -115,6 +115,7 @@ public class ProductControllerUnitTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetProductsByBrand() throws Exception {
         String brand = "Intel";
         List<ProductDto> productDtoList = Arrays.asList(getDummyProductDtoOne(), getDummyProductDtoTwo());
@@ -125,12 +126,13 @@ public class ProductControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.size()", is(productDtoList.size())))
-                .andExpect(jsonPath("$[0].name", is(productDtoList.get(0).getName())))
-                .andExpect(jsonPath("$[1].name", is(productDtoList.get(1).getName())));
+                .andExpect(jsonPath("$._embedded.productDtoList.size()", is(productDtoList.size())))
+                .andExpect(jsonPath("$._embedded.productDtoList[0].name", is(productDtoList.get(0).getName())))
+                .andExpect(jsonPath("$._embedded.productDtoList[1].name", is(productDtoList.get(1).getName())));
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetProductsByPriceRange() throws Exception {
         BigDecimal minPrice = BigDecimal.valueOf(50.0);
         BigDecimal maxPrice = BigDecimal.valueOf(100.0);
@@ -144,12 +146,13 @@ public class ProductControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.size()", is(productDtoList.size())))
-                .andExpect(jsonPath("$[0].name", is(productDtoList.get(0).getName())))
-                .andExpect(jsonPath("$[1].name", is(productDtoList.get(1).getName())));
+                .andExpect(jsonPath("$._embedded.productDtoList.size()", is(productDtoList.size())))
+                .andExpect(jsonPath("$._embedded.productDtoList[0].name", is(productDtoList.get(0).getName())))
+                .andExpect(jsonPath("$._embedded.productDtoList[1].name", is(productDtoList.get(1).getName())));
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     public void testGetProductsByTagIdSuccess() throws Exception {
         ProductDto productOne = getDummyProductDtoOne();
         TagDto tagDto = getDummyTagDto();
@@ -161,7 +164,7 @@ public class ProductControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$[0].productId").value(productOne.getProductId()));
+                .andExpect(jsonPath("$._embedded.productDtoList[0].productId").value(productOne.getProductId()));
     }
 
     @Test
@@ -217,7 +220,6 @@ public class ProductControllerUnitTest {
     @WithMockUser(roles = "USER")
     void testCreateProductAccessDenied() throws Exception {
         ProductDto productDto = getDummyProductDtoOne();
-        productDto.setStockQuantity(-1);
 
         mockMvc.perform(post("/product")
                         .content(objectMapper.writeValueAsString(productDto))

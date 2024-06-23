@@ -3,6 +3,7 @@ package com.savian.cartblitz.endpoint;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.savian.cartblitz.dto.OrderProductDto;
 import com.savian.cartblitz.exception.OrderProductNotFoundException;
+import com.savian.cartblitz.exception.ResourceNotFoundException;
 import com.savian.cartblitz.mapper.OrderProductMapper;
 import com.savian.cartblitz.model.*;
 import com.savian.cartblitz.service.OrderProductService;
@@ -59,8 +60,8 @@ public class OrderProductControllerUnitTest {
         mockMvc.perform(get("/orderProduct")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].orderProductId").value(orderProductId));
+                .andExpect(jsonPath("$._embedded.orderProductList", hasSize(2)))
+                .andExpect(jsonPath("$._embedded.orderProductList[0].orderProductId").value(orderProductId));
     }
 
     @Test
@@ -100,7 +101,16 @@ public class OrderProductControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$[0].orderProductId").value(orderProductId));
+                .andExpect(jsonPath("$._embedded.orderProductList[0].orderProductId").value(orderProductId));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    public void testGetOrderProductsByOrderIdNotFound() throws Exception {
+        when(orderProductService.getOrderProductsByOrderId(99L)).thenThrow(new ResourceNotFoundException("Order not found"));
+
+        mockMvc.perform(get("/orderProduct/order/{orderId}", 99L))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -117,8 +127,18 @@ public class OrderProductControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$[0].orderProductId").value(orderProductId));
+                .andExpect(jsonPath("$._embedded.orderProductList[0].orderProductId").value(orderProductId));
     }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    public void testGetOrderProductsByProductIdNotFound() throws Exception {
+        when(orderProductService.getOrderProductsByProductId(99L)).thenThrow(new ResourceNotFoundException("Product not found"));
+
+        mockMvc.perform(get("/orderProduct/product/{productId}", 99L))
+                .andExpect(status().isNotFound());
+    }
+
     @Test
     @WithMockUser(roles = "ADMIN")
     void testCreateOrderProductSuccess() throws Exception {

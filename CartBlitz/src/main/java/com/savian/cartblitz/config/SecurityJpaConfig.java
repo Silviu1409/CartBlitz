@@ -35,10 +35,12 @@ public class SecurityJpaConfig {
         return http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/home", "/login", "/register", "/categories", "/webjars/**", "/resources/**", "/images/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/product", "/product/brand/**", "/product/tag/**", "/product/priceRange").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/product/**").permitAll()
-                        .requestMatchers("/cart", "/order/complete/**", "/product/add-to-cart/**", "/profile").hasAuthority("ROLE_USER")
-                        .requestMatchers(HttpMethod.GET, "/order/id/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
-                        .requestMatchers("/addProduct", "/product/**", "/orderProduct/**", "/customer/**", "/order/**", "/review/**", "/tag/**", "/warranty/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/cart", "/product/add-to-cart/**", "/profile").hasAuthority("ROLE_USER")
+                        .requestMatchers(HttpMethod.POST, "/order/complete/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/order/id/**", "/orderProduct/**/orderId/**/productId/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
+                        .requestMatchers("/addProduct", "/product/**", "/product/api/**", "/orderProduct/**", "/customer/**", "/order/**", "/review/**", "/tag/**", "/warranty/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
                 )
                 .userDetailsService(userDetailsService)

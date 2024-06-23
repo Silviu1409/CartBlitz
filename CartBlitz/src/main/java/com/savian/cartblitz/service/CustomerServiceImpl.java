@@ -29,10 +29,10 @@ public class CustomerServiceImpl implements CustomerService{
     }
 
     @Override
-    public Optional<Customer> getCustomerById(Long customerId) {
+    public Optional<CustomerDto> getCustomerById(Long customerId) {
         Optional<Customer> customer = customerRepository.findById(customerId);
         if (customer.isPresent()) {
-            return customer;
+            return Optional.of(customerMapper.customerToCustomerDto(customer.get()));
         }
         else {
             throw new CustomerNotFoundException(customerId);
@@ -40,10 +40,10 @@ public class CustomerServiceImpl implements CustomerService{
     }
 
     @Override
-    public Optional<Customer> getCustomerByUsername(String username) {
+    public Optional<CustomerDto> getCustomerByUsername(String username) {
         Optional<Customer> customer = customerRepository.findByUsername(username);
         if (customer.isPresent()) {
-            return customer;
+            return Optional.of(customerMapper.customerToCustomerDto(customer.get()));
         }
         else {
             throw new CustomerNotFoundException("username", username);

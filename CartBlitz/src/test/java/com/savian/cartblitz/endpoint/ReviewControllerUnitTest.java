@@ -54,7 +54,7 @@ public class ReviewControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$", hasSize(2)));
+                .andExpect(jsonPath("$._embedded.reviewDtoList", hasSize(2)));
     }
 
     @Test
@@ -96,7 +96,7 @@ public class ReviewControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$", hasSize(2)));
+                .andExpect(jsonPath("$._embedded.reviewDtoList", hasSize(2)));
     }
 
     @Test
@@ -112,7 +112,7 @@ public class ReviewControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$", hasSize(2)));
+                .andExpect(jsonPath("$._embedded.reviewDtoList", hasSize(2)));
     }
 
     @Test
@@ -127,7 +127,51 @@ public class ReviewControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$", hasSize(2)));
+                .andExpect(jsonPath("$._embedded.reviewDtoList", hasSize(2)));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    public void testCreateReviewApi() throws Exception {
+        ReviewDto reviewDto = getDummyReviewDtoOne();
+
+        when(reviewService.saveReview(any())).thenReturn(reviewDto);
+
+        mockMvc.perform(post("/review/api")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(reviewDto)))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "/review/" + reviewDto.getReviewId()));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    public void testCreateReviewApiInvalid() throws Exception {
+        ReviewDto reviewDto = getDummyReviewDtoOne();
+        reviewDto.setRating(0);
+
+        when(reviewService.saveReview(any())).thenReturn(reviewDto);
+
+        mockMvc.perform(post("/review/api")
+                        .content(objectMapper.writeValueAsString(reviewDto))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    public void testCreateReviewAccessApiDenied() throws Exception {
+        ReviewDto reviewDto = getDummyReviewDtoOne();
+        reviewDto.setRating(0);
+
+        when(reviewService.saveReview(any())).thenReturn(reviewDto);
+
+        mockMvc.perform(post("/review/api")
+                        .content(objectMapper.writeValueAsString(reviewDto))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -138,25 +182,12 @@ public class ReviewControllerUnitTest {
         when(reviewService.saveReview(any())).thenReturn(reviewDto);
 
         mockMvc.perform(post("/review")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(reviewDto)))
-                .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/review/" + reviewDto.getReviewId()));
-    }
+                        .flashAttr("review", reviewDto)
+                        .param("productId", String.valueOf(reviewDto.getProductId()))) // Simulate productId in form
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/product/id/" + reviewDto.getProductId()));
 
-    @Test
-    @WithMockUser(roles = "ADMIN")
-    public void testCreateReviewInvalid() throws Exception {
-        ReviewDto reviewDto = getDummyReviewDtoOne();
-        reviewDto.setRating(0);
-
-        when(reviewService.saveReview(any())).thenReturn(reviewDto);
-
-        mockMvc.perform(post("/review")
-                        .content(objectMapper.writeValueAsString(reviewDto))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+        verify(reviewService, times(1)).saveReview(reviewDto);
     }
 
     @Test

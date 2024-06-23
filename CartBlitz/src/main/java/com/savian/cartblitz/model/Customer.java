@@ -2,7 +2,9 @@ package com.savian.cartblitz.model;
 
 import com.savian.cartblitz.model.security.Authority;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.springframework.hateoas.RepresentationModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +18,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Builder
 @Table(name = "customer")
-public class Customer {
+public class Customer extends RepresentationModel<Customer> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long customerId;

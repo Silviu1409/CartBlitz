@@ -54,12 +54,14 @@ public class CustomerServiceUnitTest {
     @Test
     public void testGetCustomerByIdFound() {
         Customer customer = getDummyCustomer();
+        CustomerDto customerDto = getDummyCustomerDto();
 
         log.info("Starting testGetCustomerByIdFound");
 
         Mockito.when(customerRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(customer));
+        Mockito.when(customerMapper.customerToCustomerDto(customer)).thenReturn(customerDto);
 
-        Optional<Customer> result = customerService.getCustomerById(customer.getCustomerId());
+        Optional<CustomerDto> result = customerService.getCustomerById(customerDto.getCustomerId());
         result.ifPresent(value -> log.info(String.valueOf(value.getCustomerId())));
 
         Mockito.verify(customerRepository).findById(customer.getCustomerId());
@@ -67,7 +69,7 @@ public class CustomerServiceUnitTest {
         log.info("Finished testGetCustomerByIdFound successfully");
 
         Assertions.assertTrue(result.isPresent());
-        Assertions.assertEquals(customer, result.get());
+        Assertions.assertEquals(customerDto, result.get());
     }
 
     @Test
@@ -89,12 +91,14 @@ public class CustomerServiceUnitTest {
     @Test
     public void testGetCustomerByUsernameFound() {
         Customer customer = getDummyCustomer();
+        CustomerDto customerDto = getDummyCustomerDto();
 
         log.info("Starting testGetCustomerByUsernameFound");
 
         Mockito.when(customerRepository.findByUsername(Mockito.anyString())).thenReturn(Optional.of(customer));
+        Mockito.when(customerMapper.customerToCustomerDto(customer)).thenReturn(customerDto);
 
-        Optional<Customer> result = customerService.getCustomerByUsername("userTest");
+        Optional<CustomerDto> result = customerService.getCustomerByUsername("userTest");
 
         result.ifPresent(value -> log.info(value.getUsername()));
 
@@ -103,7 +107,7 @@ public class CustomerServiceUnitTest {
         log.info("Finished testGetCustomerByUsernameFound successfully");
 
         Assertions.assertTrue(result.isPresent());
-        Assertions.assertEquals(customer, result.get());
+        Assertions.assertEquals(customerDto, result.get());
     }
 
     @Test

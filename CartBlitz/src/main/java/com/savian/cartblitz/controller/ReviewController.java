@@ -10,6 +10,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -44,8 +48,18 @@ public class ReviewController {
                     @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Not Found", responseCode = "404")
             })
-    public ResponseEntity<List<ReviewDto>> GetAllReviews(){
-        return ResponseEntity.ok(reviewService.getAllReviews());
+    public ResponseEntity<CollectionModel<EntityModel<ReviewDto>>> GetAllReviews() {
+        List<ReviewDto> reviews = reviewService.getAllReviews();
+        List<EntityModel<ReviewDto>> reviewModels = reviews.stream()
+                .map(review -> EntityModel.of(review,
+                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewById(review.getReviewId())).withSelfRel(),
+                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetAllReviews()).withRel("all-reviews")))
+                .collect(Collectors.toList());
+
+        CollectionModel<EntityModel<ReviewDto>> collectionModel = CollectionModel.of(reviewModels);
+        collectionModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetAllReviews()).withSelfRel());
+
+        return ResponseEntity.ok(collectionModel);
     }
 
     @GetMapping(path = "/id/{reviewId}", produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -56,16 +70,15 @@ public class ReviewController {
                     @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Not Found", responseCode = "404")
             })
-    public ResponseEntity<Optional<ReviewDto>> GetReviewById(
+    public ResponseEntity<EntityModel<ReviewDto>> GetReviewById(
             @PathVariable
             @Parameter(name = "reviewId", description = "Review id", example = "1", required = true) Long reviewId){
         Optional<ReviewDto> optionalReview = reviewService.getReviewById(reviewId);
 
-        if (optionalReview.isPresent()) {
-            return ResponseEntity.ok(optionalReview);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return optionalReview.map(review -> ResponseEntity.ok(EntityModel.of(review,
+                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewById(reviewId)).withSelfRel(),
+                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetAllReviews()).withRel("all-reviews"))))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping(path = "/customer/{customerId}", produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -76,10 +89,20 @@ public class ReviewController {
                     @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Not Found", responseCode = "404")
             })
-    public ResponseEntity<List<ReviewDto>> GetReviewsByCustomerId(
+    public ResponseEntity<CollectionModel<EntityModel<ReviewDto>>> GetReviewsByCustomerId(
             @PathVariable
             @Parameter(name = "customerId", description = "Customer id", example = "1", required = true) Long customerId){
-        return ResponseEntity.ok(reviewService.getReviewsByCustomerId(customerId));
+        List<ReviewDto> reviews = reviewService.getReviewsByCustomerId(customerId);
+        List<EntityModel<ReviewDto>> reviewModels = reviews.stream()
+                .map(review -> EntityModel.of(review,
+                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewById(review.getReviewId())).withSelfRel(),
+                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewsByCustomerId(customerId)).withRel("reviews-by-customer")))
+                .collect(Collectors.toList());
+
+        CollectionModel<EntityModel<ReviewDto>> collectionModel = CollectionModel.of(reviewModels);
+        collectionModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewsByCustomerId(customerId)).withSelfRel());
+
+        return ResponseEntity.ok(collectionModel);
     }
 
     @GetMapping(path = "/product/{productId}", produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -90,10 +113,20 @@ public class ReviewController {
                     @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Not Found", responseCode = "404")
             })
-    public ResponseEntity<List<ReviewDto>> GetReviewsByProductId(
+    public ResponseEntity<CollectionModel<EntityModel<ReviewDto>>> GetReviewsByProductId(
             @PathVariable
             @Parameter(name = "productId", description = "Product id", example = "1", required = true) Long productId){
-        return ResponseEntity.ok(reviewService.getReviewsByProductId(productId));
+        List<ReviewDto> reviews = reviewService.getReviewsByProductId(productId);
+        List<EntityModel<ReviewDto>> reviewModels = reviews.stream()
+                .map(review -> EntityModel.of(review,
+                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewById(review.getReviewId())).withSelfRel(),
+                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewsByProductId(productId)).withRel("reviews-by-product")))
+                .collect(Collectors.toList());
+
+        CollectionModel<EntityModel<ReviewDto>> collectionModel = CollectionModel.of(reviewModels);
+        collectionModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewsByProductId(productId)).withSelfRel());
+
+        return ResponseEntity.ok(collectionModel);
     }
 
     @GetMapping(path = "/rating/{rating}", produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -104,13 +137,23 @@ public class ReviewController {
                     @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Not Found", responseCode = "404")
             })
-    public ResponseEntity<List<ReviewDto>> GetReviewsByRating(
+    public ResponseEntity<CollectionModel<EntityModel<ReviewDto>>> GetReviewsByRating(
             @PathVariable
             @Parameter(name = "rating", description = "Rating", example = "1", required = true) Integer rating){
-        return ResponseEntity.ok(reviewService.getReviewsByRating(rating));
+        List<ReviewDto> reviews = reviewService.getReviewsByRating(rating);
+        List<EntityModel<ReviewDto>> reviewModels = reviews.stream()
+                .map(review -> EntityModel.of(review,
+                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewById(review.getReviewId())).withSelfRel(),
+                        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewsByRating(rating)).withRel("reviews-by-rating")))
+                .collect(Collectors.toList());
+
+        CollectionModel<EntityModel<ReviewDto>> collectionModel = CollectionModel.of(reviewModels);
+        collectionModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewsByRating(rating)).withSelfRel());
+
+        return ResponseEntity.ok(collectionModel);
     }
 
-    @PostMapping(consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = {MediaType.APPLICATION_JSON_VALUE })
+    @PostMapping(path = "/api", consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
     @Operation(description = "Creating review - all info will be put in",
             summary = "Creating a new review",
             responses = {
@@ -119,13 +162,17 @@ public class ReviewController {
                     @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Bad Request - validation error per request", responseCode = "500")
             })
-    public ResponseEntity<ReviewDto> CreateReview(
+    public ResponseEntity<EntityModel<ReviewDto>> CreateReview(
             @Valid @RequestBody ReviewDto reviewDto){
         ReviewDto review = reviewService.saveReview(reviewDto);
-        return ResponseEntity.created(URI.create("/review/" + review.getReviewId())).body(review);
+        EntityModel<ReviewDto> reviewModel = EntityModel.of(review,
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewById(review.getReviewId())).withSelfRel(),
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).CreateReview(reviewDto)).withRel("create-review"));
+
+        return ResponseEntity.created(URI.create("/review/" + review.getReviewId())).body(reviewModel);
     }
 
-    @PostMapping("")
+    @PostMapping(produces = { MediaType.APPLICATION_JSON_VALUE })
     @Operation(description = "Creating review - all info will be put in",
             summary = "Creating a new review")
     @ApiResponses(value = {
@@ -153,11 +200,15 @@ public class ReviewController {
                     @ApiResponse(description = "Field validation error", responseCode = "400"),
                     @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Review Not Found", responseCode = "404")
-
             })
-    public ResponseEntity<ReviewDto> UpdateReview(@PathVariable @Parameter(name = "reviewId", description = "Review id", example = "1", required = true) Long reviewId,
-                                                 @Valid @RequestBody ReviewDto reviewDto){
-        return ResponseEntity.ok(reviewService.updateReview(reviewId, reviewDto));
+    public ResponseEntity<EntityModel<ReviewDto>> updateReview(@PathVariable @Parameter(name = "reviewId", description = "Review id", example = "1", required = true) Long reviewId,
+                                                               @Valid @RequestBody ReviewDto reviewDto){
+        ReviewDto updatedReview = reviewService.updateReview(reviewId, reviewDto);
+        EntityModel<ReviewDto> reviewModel = EntityModel.of(updatedReview,
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).GetReviewById(reviewId)).withSelfRel(),
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ReviewController.class).updateReview(reviewId, reviewDto)).withRel("update-review"));
+
+        return ResponseEntity.ok(reviewModel);
     }
 
     @DeleteMapping(path = "/id/{reviewId}")

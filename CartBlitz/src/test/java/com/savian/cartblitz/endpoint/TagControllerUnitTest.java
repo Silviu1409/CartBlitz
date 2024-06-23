@@ -58,7 +58,7 @@ public class TagControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$", hasSize(dummyTags.size())));
+                .andExpect(jsonPath("$._embedded.tagDtoList", hasSize(dummyTags.size())));
     }
 
     @Test
@@ -131,7 +131,7 @@ public class TagControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$[0].tagId").value(tag.getTagId()));
+                .andExpect(jsonPath("$._embedded.tagDtoList[0].tagId").value(tag.getTagId()));
     }
 
     @Test

@@ -1,10 +1,8 @@
 package com.savian.cartblitz.controller;
 
-import com.savian.cartblitz.dto.OrderDto;
-import com.savian.cartblitz.dto.OrderProductDto;
-import com.savian.cartblitz.dto.ProductDto;
-import com.savian.cartblitz.dto.ReviewDto;
+import com.savian.cartblitz.dto.*;
 import com.savian.cartblitz.exception.ResourceNotFoundException;
+import com.savian.cartblitz.mapper.ProductMapper;
 import com.savian.cartblitz.model.*;
 import com.savian.cartblitz.repository.OrderProductRepository;
 import com.savian.cartblitz.service.CustomerService;
@@ -19,6 +17,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +36,7 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.security.Principal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -47,13 +50,15 @@ public class ProductController {
     OrderService orderService;
     OrderProductRepository orderProductRepository;
     OrderProductService orderProductService;
+    ProductMapper productMapper;
 
-    public ProductController(ProductService productService, CustomerService customerService, OrderService orderService, OrderProductRepository orderProductRepository, OrderProductService orderProductService) {
+    public ProductController(ProductService productService, CustomerService customerService, OrderService orderService, OrderProductRepository orderProductRepository, OrderProductService orderProductService, ProductMapper productMapper) {
         this.productService = productService;
         this.customerService = customerService;
         this.orderService = orderService;
         this.orderProductRepository = orderProductRepository;
         this.orderProductService = orderProductService;
+        this.productMapper = productMapper;
     }
 
     @GetMapping(produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -61,10 +66,49 @@ public class ProductController {
             summary = "Showing all products")
     @ApiResponses(value = {
             @ApiResponse(description = "Success", responseCode = "200"),
+            @ApiResponse(description = "Access denied", responseCode = "403"),
             @ApiResponse(description = "Not Found", responseCode = "404"),
     })
-    public ResponseEntity<List<ProductDto>> GetAllProducts(){
-        return ResponseEntity.ok(productService.getAllProducts());
+    public ResponseEntity<CollectionModel<EntityModel<ProductDto>>> GetAllProducts() {
+        List<ProductDto> productDtos = productService.getAllProducts();
+
+        List<EntityModel<ProductDto>> productModels = productDtos.stream()
+                .map(productDto -> {
+                    Link selfLink = WebMvcLinkBuilder.linkTo(ProductController.class).slash("id").slash(productDto.getProductId()).withSelfRel();
+                    Link categoryLink = WebMvcLinkBuilder.linkTo(ProductController.class).slash("category").slash(productDto.getCategory()).withRel("category");
+                    return EntityModel.of(productDto, selfLink, categoryLink);
+                })
+                .collect(Collectors.toList());
+
+        Link selfLink = WebMvcLinkBuilder.linkTo(ProductController.class).withSelfRel();
+        CollectionModel<EntityModel<ProductDto>> model = CollectionModel.of(productModels, selfLink);
+
+        return ResponseEntity.ok(model);
+    }
+
+    @GetMapping(path = "/api/id/{productId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(description = "Showing all info about a product with given id",
+            summary = "Showing product with given id")
+    @ApiResponses(value = {
+            @ApiResponse(description = "Success", responseCode = "200"),
+            @ApiResponse(description = "Access denied", responseCode = "403"),
+            @ApiResponse(description = "Not Found", responseCode = "404"),
+    })
+    public ResponseEntity<EntityModel<ProductDto>> getProductByIdApi(
+            @PathVariable Long productId) {
+        Optional<Product> optionalProduct = productService.getProductById(productId);
+
+        if (optionalProduct.isPresent()) {
+            ProductDto productDto = productMapper.productToProductDto(optionalProduct.get());
+
+            EntityModel<ProductDto> model = EntityModel.of(productDto);
+            model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(productId)).withSelfRel());
+            model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductsByCategoryApi(productDto.getCategory())).withRel("productsInCategory"));
+
+            return ResponseEntity.ok(model);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @GetMapping(path = "/id/{productId}")
@@ -84,7 +128,7 @@ public class ProductController {
 
             if(principal != null){
                 String username = principal.getName();
-                Optional<Customer> optionalCustomer = customerService.getCustomerByUsername(username);
+                Optional<CustomerDto> optionalCustomer = customerService.getCustomerByUsername(username);
 
                 optionalCustomer.ifPresent(customer -> review.setCustomerId(customer.getCustomerId()));
             }
@@ -109,7 +153,40 @@ public class ProductController {
         }
     }
 
-    @GetMapping(path = "/category/{category}")
+    @GetMapping(path = "/api/category/{category}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(description = "Showing all info about products from the given category",
+            summary = "Showing products with from the given category")
+    @ApiResponses(value = {
+            @ApiResponse(description = "Success", responseCode = "200"),
+            @ApiResponse(description = "Access denied", responseCode = "403"),
+            @ApiResponse(description = "Not Found", responseCode = "404"),
+    })
+    public ResponseEntity<CollectionModel<EntityModel<ProductDto>>> getProductsByCategoryApi(
+            @PathVariable String category) {
+        List<ProductDto> products = productService.getProductsByCategory(category);
+        Map<Long, Integer> numImagesMap = new HashMap<>();
+
+        for (ProductDto productDto : products) {
+            int numImages = productService.getNumImagesForProduct(productDto.getCategory().toLowerCase(), productDto.getProductId());
+            numImagesMap.put(productDto.getProductId(), numImages);
+        }
+
+        List<EntityModel<ProductDto>> productModels = new ArrayList<>();
+        for (ProductDto product : products) {
+            Long productId = product.getProductId();
+            EntityModel<ProductDto> model = EntityModel.of(product);
+            model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(productId)).withSelfRel());
+            productModels.add(model);
+        }
+
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductsByCategoryApi(category)).withSelfRel();
+
+        CollectionModel<EntityModel<ProductDto>> collectionModel = CollectionModel.of(productModels, selfLink);
+
+        return ResponseEntity.ok(collectionModel);
+    }
+
+    @GetMapping(path = "/category/{category}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(description = "Showing all info about products from the given category",
             summary = "Showing products with from the given category")
     @ApiResponses(value = {
@@ -137,7 +214,35 @@ public class ProductController {
         return "products";
     }
 
-    @GetMapping(path = "/category/{category}/sort")
+    @GetMapping(path = "/api/category/{category}/sort", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(description = "Sort products from the given category")
+    @ApiResponses(value = {
+            @ApiResponse(description = "Success", responseCode = "200"),
+            @ApiResponse(description = "Access denied", responseCode = "403"),
+            @ApiResponse(description = "Not Found", responseCode = "404"),
+    })
+    public ResponseEntity<CollectionModel<EntityModel<ProductDto>>> sortProductsByCategoryApi(
+            @PathVariable String category,
+            @RequestParam String sortBy,
+            @RequestParam String sortOrder) {
+        List<ProductDto> products = productService.getProductsByCategory(category);
+        List<ProductDto> sortedProducts = productService.sortProducts(products, sortBy, sortOrder);
+
+        List<EntityModel<ProductDto>> productModels = sortedProducts.stream()
+                .map(product -> {
+                    EntityModel<ProductDto> model = EntityModel.of(product);
+                    model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+                    model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).sortProductsByCategoryApi(category, sortBy, sortOrder)).withRel("sorted-products"));
+                    return model;
+                }).toList();
+
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).sortProductsByCategoryApi(category, sortBy, sortOrder)).withSelfRel();
+        CollectionModel<EntityModel<ProductDto>> collectionModel = CollectionModel.of(productModels, selfLink);
+
+        return ResponseEntity.ok(collectionModel);
+    }
+
+    @GetMapping(path = "/category/{category}/sort", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(description = "Sort products from the given category")
     @ApiResponses(value = {
             @ApiResponse(description = "Success", responseCode = "200"),
@@ -172,7 +277,50 @@ public class ProductController {
         return "products";
     }
 
-    @GetMapping(path = "/category/{category}/filter")
+    @GetMapping(path = "/api/category/{category}/filter", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(description = "Filter products from the given category by min price and max price")
+    @ApiResponses(value = {
+            @ApiResponse(description = "Success", responseCode = "200"),
+            @ApiResponse(description = "Not Found", responseCode = "404"),
+    })
+    public ResponseEntity<CollectionModel<EntityModel<ProductDto>>> filterProductsByCategoryApi(
+            @PathVariable String category,
+            @RequestParam String minPrice,
+            @RequestParam String maxPrice) {
+        List<ProductDto> products = productService.getProductsByCategory(category);
+
+        BigDecimal minPriceValue = BigDecimal.ZERO;
+        BigDecimal maxPriceValue = BigDecimal.valueOf(Double.MAX_VALUE);
+
+        if (minPrice != null && !minPrice.isEmpty()) {
+            try {
+                minPriceValue = new BigDecimal(minPrice);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        if (maxPrice != null && !maxPrice.isEmpty()) {
+            try {
+                maxPriceValue = new BigDecimal(maxPrice);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        List<ProductDto> filteredProducts = productService.filterProductsMinPriceMaxPrice(products, minPriceValue, maxPriceValue);
+
+        List<EntityModel<ProductDto>> productModels = filteredProducts.stream()
+                .map(product -> {
+                    EntityModel<ProductDto> model = EntityModel.of(product);
+                    model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+                    model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).filterProductsByCategoryApi(category, minPrice, maxPrice)).withRel("filtered-products"));
+                    return model;
+                }).toList();
+
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).filterProductsByCategoryApi(category, minPrice, maxPrice)).withSelfRel();
+        CollectionModel<EntityModel<ProductDto>> collectionModel = CollectionModel.of(productModels, selfLink);
+
+        return ResponseEntity.ok(collectionModel);
+    }
+
+    @GetMapping(path = "/category/{category}/filter", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(description = "Filter products from the given category by min price and max price")
     @ApiResponses(value = {
             @ApiResponse(description = "Success", responseCode = "200"),
@@ -222,7 +370,31 @@ public class ProductController {
         return "products";
     }
 
-    @GetMapping(path = "/search")
+    @GetMapping(path = "/api/search", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Search products", description = "Search for products based on the provided search query")
+    @ApiResponses(value = {
+            @ApiResponse(description = "Success", responseCode = "200"),
+            @ApiResponse(description = "Not Found", responseCode = "404")
+    })
+    public ResponseEntity<CollectionModel<EntityModel<ProductDto>>> searchProductsApi(
+            @RequestParam(name = "search") String searchQuery) {
+        List<ProductDto> products = productService.searchProducts(searchQuery);
+
+        List<EntityModel<ProductDto>> productModels = products.stream()
+                .map(product -> {
+                    EntityModel<ProductDto> model = EntityModel.of(product);
+                    model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+                    model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).searchProductsApi(searchQuery)).withRel("search-results"));
+                    return model;
+                }).toList();
+
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).searchProductsApi(searchQuery)).withSelfRel();
+        CollectionModel<EntityModel<ProductDto>> collectionModel = CollectionModel.of(productModels, selfLink);
+
+        return ResponseEntity.ok(collectionModel);
+    }
+
+    @GetMapping(path = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Search products", description = "Search for products based on the provided search query")
     @ApiResponses(value = {
             @ApiResponse(description = "Success", responseCode = "200"),
@@ -247,7 +419,33 @@ public class ProductController {
         return "products";
     }
 
-    @GetMapping(path = "/sort")
+    @GetMapping(path = "/api/sort", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(description = "Sort products")
+    @ApiResponses(value = {
+            @ApiResponse(description = "Success", responseCode = "200"),
+            @ApiResponse(description = "Not Found", responseCode = "404"),
+    })
+    public ResponseEntity<CollectionModel<EntityModel<ProductDto>>> sortProductsApi(
+            @RequestParam String sortBy,
+            @RequestParam String sortOrder) {
+        List<ProductDto> products = productService.getAllProducts();
+        List<ProductDto> sortedProducts = productService.sortProducts(products, sortBy, sortOrder);
+
+        List<EntityModel<ProductDto>> productModels = sortedProducts.stream()
+                .map(product -> {
+                    EntityModel<ProductDto> model = EntityModel.of(product);
+                    model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+                    model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).sortProductsApi(sortBy, sortOrder)).withRel("sorted-products"));
+                    return model;
+                }).toList();
+
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).sortProductsApi(sortBy, sortOrder)).withSelfRel();
+        CollectionModel<EntityModel<ProductDto>> collectionModel = CollectionModel.of(productModels, selfLink);
+
+        return ResponseEntity.ok(collectionModel);
+    }
+
+    @GetMapping(path = "/sort", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(description = "Sort products")
     @ApiResponses(value = {
             @ApiResponse(description = "Success", responseCode = "200"),
@@ -279,7 +477,50 @@ public class ProductController {
         return "products";
     }
 
-    @GetMapping(path = "/filter")
+    @GetMapping(path = "/api/filter", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(description = "Filter products by min price and max price",
+            summary = "Filter products based on min and max price")
+    @ApiResponses(value = {
+            @ApiResponse(description = "Success", responseCode = "200"),
+            @ApiResponse(description = "Not Found", responseCode = "404"),
+    })
+    public ResponseEntity<CollectionModel<EntityModel<ProductDto>>> filterProductsApi(
+            @RequestParam String minPrice,
+            @RequestParam String maxPrice) {
+        List<ProductDto> products = productService.getAllProducts();
+
+        BigDecimal minPriceValue = BigDecimal.ZERO;
+        BigDecimal maxPriceValue = BigDecimal.valueOf(Double.MAX_VALUE);
+
+        if (minPrice != null && !minPrice.isEmpty()) {
+            try {
+                minPriceValue = new BigDecimal(minPrice);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        if (maxPrice != null && !maxPrice.isEmpty()) {
+            try {
+                maxPriceValue = new BigDecimal(maxPrice);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        List<ProductDto> filteredProducts = productService.filterProductsMinPriceMaxPrice(products, minPriceValue, maxPriceValue);
+
+        List<EntityModel<ProductDto>> productModels = filteredProducts.stream()
+                .map(product -> {
+                    EntityModel<ProductDto> model = EntityModel.of(product);
+                    model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+                    model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).filterProductsApi(minPrice, maxPrice)).withRel("filtered-products"));
+                    return model;
+                }).toList();
+
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).filterProductsApi(minPrice, maxPrice)).withSelfRel();
+        CollectionModel<EntityModel<ProductDto>> collectionModel = CollectionModel.of(productModels, selfLink);
+
+        return ResponseEntity.ok(collectionModel);
+    }
+
+    @GetMapping(path = "/filter", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(description = "Filter products by min price and max price",
             summary = "Filter products based on min and max price")
     @ApiResponses(value = {
@@ -343,7 +584,7 @@ public class ProductController {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String username = userDetails.getUsername();
 
-        Optional<Customer> customer = customerService.getCustomerByUsername(username);
+        Optional<CustomerDto> customer = customerService.getCustomerByUsername(username);
 
         if (customer.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer not found");
@@ -386,10 +627,22 @@ public class ProductController {
             @ApiResponse(description = "Success", responseCode = "200"),
             @ApiResponse(description = "Not Found", responseCode = "404"),
     })
-    public ResponseEntity<List<ProductDto>> GetProductsByBrand(
-            @PathVariable
-            @Parameter(name = "brand", description = "Product brand", example = "Intel", required = true) String brand){
-        return ResponseEntity.ok(productService.getProductsByBrand(brand));
+    public ResponseEntity<CollectionModel<EntityModel<ProductDto>>> GetProductsByBrand(
+            @PathVariable @Parameter(name = "brand", description = "Product brand", example = "Intel", required = true) String brand) {
+        List<ProductDto> products = productService.getProductsByBrand(brand);
+        List<EntityModel<ProductDto>> productModels = new ArrayList<>();
+
+        for (ProductDto product : products) {
+            EntityModel<ProductDto> productModel = EntityModel.of(product);
+            productModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+            productModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).GetProductsByBrand(brand)).withRel("products-by-brand"));
+            productModels.add(productModel);
+        }
+
+        CollectionModel<EntityModel<ProductDto>> collectionModel = CollectionModel.of(productModels);
+        collectionModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).GetProductsByBrand(brand)).withSelfRel());
+
+        return ResponseEntity.ok(collectionModel);
     }
 
     @GetMapping(path = "/priceRange", produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -399,10 +652,23 @@ public class ProductController {
             @ApiResponse(description = "Success", responseCode = "200"),
             @ApiResponse(description = "Not Found", responseCode = "404"),
     })
-    public ResponseEntity<List<ProductDto>> GetProductsByPriceRange(
+    public ResponseEntity<CollectionModel<EntityModel<ProductDto>>> GetProductsByPriceRange(
             @RequestParam(name = "minPrice", required = false, defaultValue = "0.00") BigDecimal minPrice,
-            @RequestParam(name = "maxPrice", required = false, defaultValue = "100000000.00") BigDecimal maxPrice){
-        return ResponseEntity.ok(productService.getProductsByPriceRange(minPrice, maxPrice));
+            @RequestParam(name = "maxPrice", required = false, defaultValue = "100000000.00") BigDecimal maxPrice) {
+        List<ProductDto> products = productService.getProductsByPriceRange(minPrice, maxPrice);
+        List<EntityModel<ProductDto>> productModels = new ArrayList<>();
+
+        for (ProductDto product : products) {
+            EntityModel<ProductDto> productModel = EntityModel.of(product);
+            productModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+            productModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).GetProductsByPriceRange(minPrice, maxPrice)).withRel("products-by-price-range"));
+            productModels.add(productModel);
+        }
+
+        CollectionModel<EntityModel<ProductDto>> collectionModel = CollectionModel.of(productModels);
+        collectionModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).GetProductsByPriceRange(minPrice, maxPrice)).withSelfRel());
+
+        return ResponseEntity.ok(collectionModel);
     }
 
     @GetMapping(path = "/tag/{tagId}", produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -412,10 +678,23 @@ public class ProductController {
                     @ApiResponse(description = "Success", responseCode = "200"),
                     @ApiResponse(description = "Not Found", responseCode = "404"),
             })
-    public ResponseEntity<List<ProductDto>> GetProductsByTagId(
+    public ResponseEntity<CollectionModel<EntityModel<ProductDto>>> GetProductsByTagId(
             @PathVariable
-            @Parameter(name = "tagId", description = "Tag id", example = "1", required = true) Long tagId){
-        return ResponseEntity.ok(productService.getProductsByTagId(tagId));
+            @Parameter(name = "tagId", description = "Tag id", example = "1", required = true) Long tagId) {
+        List<ProductDto> products = productService.getProductsByTagId(tagId);
+        List<EntityModel<ProductDto>> productModels = new ArrayList<>();
+
+        for (ProductDto product : products) {
+            EntityModel<ProductDto> productModel = EntityModel.of(product);
+            productModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+            productModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).GetProductsByTagId(tagId)).withRel("products-by-tag"));
+            productModels.add(productModel);
+        }
+
+        CollectionModel<EntityModel<ProductDto>> collectionModel = CollectionModel.of(productModels);
+        collectionModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).GetProductsByTagId(tagId)).withSelfRel());
+
+        return ResponseEntity.ok(collectionModel);
     }
 
     @PatchMapping
@@ -427,10 +706,14 @@ public class ProductController {
                     @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Not Found", responseCode = "404")
             })
-    public ResponseEntity<Product> UpdateStockQuantity(
+    public ResponseEntity<EntityModel<Product>> UpdateStockQuantity(
             @RequestParam Long productId,
-            @RequestParam Integer stockQuantity){
-        return ResponseEntity.ok(productService.updateStockQuantity(productId, stockQuantity));
+            @RequestParam Integer stockQuantity) {
+        Product product = productService.updateStockQuantity(productId, stockQuantity);
+        EntityModel<Product> productModel = EntityModel.of(product);
+        productModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+
+        return ResponseEntity.ok(productModel);
     }
 
     @PostMapping(consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = {MediaType.APPLICATION_JSON_VALUE })
@@ -442,10 +725,14 @@ public class ProductController {
                     @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Bad Request - validation error per request", responseCode = "500")
             })
-    public ResponseEntity<Product> CreateProduct(
-            @Valid @RequestBody ProductDto productDto){
+    public ResponseEntity<EntityModel<Product>> CreateProduct(
+            @Valid @RequestBody ProductDto productDto) {
         Product product = productService.saveProduct(productDto);
-        return ResponseEntity.created(URI.create("/product/" + product.getProductId())).body(product);
+        EntityModel<Product> productModel = EntityModel.of(product);
+        productModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+        productModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).CreateProduct(productDto)).withRel("create-product"));
+
+        return ResponseEntity.created(URI.create("/product/" + product.getProductId())).body(productModel);
     }
 
     @PutMapping(path = "/id/{productId}", produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -456,11 +743,14 @@ public class ProductController {
                     @ApiResponse(description = "Field validation error", responseCode = "400"),
                     @ApiResponse(description = "Access denied", responseCode = "403"),
                     @ApiResponse(description = "Product Not Found", responseCode = "404")
-
             })
-    public ResponseEntity<Product> UpdateProduct(@PathVariable @Parameter(name = "productId", description = "Product id", example = "1", required = true) Long productId,
-                                                   @Valid @RequestBody ProductDto productDto){
-        return  ResponseEntity.ok(productService.updateProduct(productId, productDto));
+    public ResponseEntity<EntityModel<Product>> UpdateProduct(@PathVariable @Parameter(name = "productId", description = "Product id", example = "1", required = true) Long productId,
+                                                              @Valid @RequestBody ProductDto productDto) {
+        Product product = productService.updateProduct(productId, productDto);
+        EntityModel<Product> productModel = EntityModel.of(product);
+        productModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductByIdApi(product.getProductId())).withSelfRel());
+
+        return ResponseEntity.ok(productModel);
     }
 
     @DeleteMapping(path = "/id/{productId}")

@@ -25,14 +25,8 @@ public class CategoryController {
             description = "Showing all info about product categories",
             summary = "Showing all product categories",
             responses = {
-                    @ApiResponse(
-                            description = "Success",
-                            responseCode = "200"
-                    ),
-                    @ApiResponse(
-                            description = "Not Found",
-                            responseCode = "404"
-                    ),
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Not Found", responseCode = "404")
             }
     )
     public String showCategories(Model model) {
