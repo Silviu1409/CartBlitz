@@ -6,6 +6,7 @@ import com.savian.cartblitz.mapper.OrderMapper;
 import com.savian.cartblitz.model.Order;
 import com.savian.cartblitz.model.OrderStatusEnum;
 import com.savian.cartblitz.service.OrderService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -51,6 +52,7 @@ public class OrderController {
     }
 
     @GetMapping(produces = { MediaType.APPLICATION_JSON_VALUE })
+    @CircuitBreaker(name = "orderService", fallbackMethod = "fallbackForGetAllOrders")
     @Operation(description = "Showing all info about orders including all fields",
             summary = "Showing all orders",
             responses = {
@@ -73,6 +75,7 @@ public class OrderController {
     }
 
     @GetMapping(path = "/id/{orderId}", produces = { MediaType.APPLICATION_JSON_VALUE })
+    @CircuitBreaker(name = "orderService", fallbackMethod = "fallbackForGetOrderById")
     @Operation(description = "Showing all info about a order with given id",
             summary = "Showing order with given id",
             responses = {
@@ -265,5 +268,15 @@ public class OrderController {
         } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
+    }
+
+    public ResponseEntity<CollectionModel<EntityModel<OrderDto>>> fallbackForGetAllOrders(Exception ex) {
+        log.error("Fallback method executed for GetAllOrders due to {}", ex.toString());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+    }
+
+    public ResponseEntity<EntityModel<OrderDto>> fallbackForGetOrderById(Long orderId, Exception ex) {
+        log.error("Fallback method executed for GetOrderById with orderId {} due to {}", orderId, ex.toString());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
     }
 }

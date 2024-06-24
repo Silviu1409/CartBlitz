@@ -4,6 +4,7 @@ import com.savian.cartblitz.dto.CustomerDto;
 import com.savian.cartblitz.exception.ResourceNotFoundException;
 import com.savian.cartblitz.model.Customer;
 import com.savian.cartblitz.service.CustomerService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -42,6 +43,7 @@ public class CustomerController {
     }
 
     @GetMapping(produces = { MediaType.APPLICATION_JSON_VALUE })
+    @CircuitBreaker(name = "customerService", fallbackMethod = "fallbackForGetAllCustomers")
     @Operation(description = "Showing all info about customers including all fields",
             summary = "Showing all customers",
             responses = {
@@ -68,6 +70,7 @@ public class CustomerController {
     }
 
     @GetMapping(path = "/id/{customerId}", produces = { MediaType.APPLICATION_JSON_VALUE })
+    @CircuitBreaker(name = "customerService", fallbackMethod = "fallbackForGetCustomerById")
     @Operation(description = "Showing all info about a customer with given id",
             summary = "Showing customer with given id",
             responses = {
@@ -213,5 +216,15 @@ public class CustomerController {
         } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
+    }
+
+    public ResponseEntity<CollectionModel<EntityModel<CustomerDto>>> fallbackForGetAllCustomers(Exception ex) {
+        log.error("Fallback method executed for GetAllCustomers due to {}", ex.toString());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+    }
+
+    public ResponseEntity<EntityModel<CustomerDto>> fallbackForGetCustomerById(Long customerId, Exception ex) {
+        log.error("Fallback method executed for GetCustomerById with customerId {} due to {}", customerId, ex.toString());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
     }
 }

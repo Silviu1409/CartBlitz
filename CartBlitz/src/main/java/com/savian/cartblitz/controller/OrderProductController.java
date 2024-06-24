@@ -5,6 +5,7 @@ import com.savian.cartblitz.exception.ResourceNotFoundException;
 import com.savian.cartblitz.model.OrderProduct;
 import com.savian.cartblitz.model.Product;
 import com.savian.cartblitz.service.OrderProductService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -45,6 +46,7 @@ public class OrderProductController {
     }
 
     @GetMapping(produces = { MediaType.APPLICATION_JSON_VALUE })
+    @CircuitBreaker(name = "orderProductService", fallbackMethod = "fallbackForGetAllOrderProducts")
     @Operation(description = "Showing all info about orderProducts including all fields",
             summary = "Showing all orderProducts",
             responses = {
@@ -62,6 +64,7 @@ public class OrderProductController {
     }
 
     @GetMapping(path = "/orderId/{orderId}/productId/{productId}", produces = { MediaType.APPLICATION_JSON_VALUE })
+    @CircuitBreaker(name = "orderProductService", fallbackMethod = "fallbackForGetOrderProductById")
     @Operation(description = "Showing all info about a orderProduct with given id",
             summary = "Showing orderProduct with given id",
             responses = {
@@ -229,5 +232,15 @@ public class OrderProductController {
     private void addLinks(OrderProduct orderProduct) {
         orderProduct.add(linkTo(methodOn(OrderProductController.class).GetOrderProductById(orderProduct.getOrder().getOrderId(), orderProduct.getProduct().getProductId())).withSelfRel());
         orderProduct.add(linkTo(methodOn(OrderProductController.class).GetAllOrderProducts()).withRel("orderProducts"));
+    }
+
+    public ResponseEntity<CollectionModel<EntityModel<OrderProductDto>>> fallbackForGetAllOrderProducts(Exception ex) {
+        log.error("Fallback method executed for GetAllOrderProducts due to {}", ex.toString());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+    }
+
+    public ResponseEntity<EntityModel<OrderProductDto>> fallbackForGetOrderProductById(Long orderProductId, Exception ex) {
+        log.error("Fallback method executed for GetOrderProductById with orderProductId {} due to {}", orderProductId, ex.toString());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
     }
 }

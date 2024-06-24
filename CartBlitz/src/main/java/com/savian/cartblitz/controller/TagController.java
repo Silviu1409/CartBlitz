@@ -3,6 +3,7 @@ package com.savian.cartblitz.controller;
 import com.savian.cartblitz.dto.TagDto;
 import com.savian.cartblitz.exception.ResourceNotFoundException;
 import com.savian.cartblitz.service.TagService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -41,6 +42,7 @@ public class TagController {
     }
 
     @GetMapping(produces = { MediaType.APPLICATION_JSON_VALUE })
+    @CircuitBreaker(name = "tagService", fallbackMethod = "fallbackForGetAllTags")
     @Operation(description = "Showing all info about tags including all fields",
             summary = "Showing all tags",
             responses = {
@@ -63,6 +65,7 @@ public class TagController {
     }
 
     @GetMapping(path = "/id/{tagId}", produces = { MediaType.APPLICATION_JSON_VALUE })
+    @CircuitBreaker(name = "tagService", fallbackMethod = "fallbackForGettagById")
     @Operation(description = "Showing all info about a tag with given id",
             summary = "Showing tag with given id",
             responses = {
@@ -178,5 +181,15 @@ public class TagController {
         } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
+    }
+
+    public ResponseEntity<CollectionModel<EntityModel<TagDto>>> fallbackForGetAllTags(Exception ex) {
+        log.error("Fallback method executed for GetAllTags due to {}", ex.toString());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+    }
+
+    public ResponseEntity<EntityModel<TagDto>> fallbackForGetTagById(Long tagId, Exception ex) {
+        log.error("Fallback method executed for GetTagById with tagId {} due to {}", tagId, ex.toString());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
     }
 }

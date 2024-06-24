@@ -3,6 +3,7 @@ package com.savian.cartblitz.controller;
 import com.savian.cartblitz.dto.WarrantyDto;
 import com.savian.cartblitz.exception.ResourceNotFoundException;
 import com.savian.cartblitz.service.WarrantyService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -41,6 +42,7 @@ public class WarrantyController {
     }
 
     @GetMapping(produces = { MediaType.APPLICATION_JSON_VALUE })
+    @CircuitBreaker(name = "warrantyService", fallbackMethod = "fallbackForGetAllWarranties")
     @Operation(description = "Showing all info about warranties including all fields",
             summary = "Showing all warranties",
             responses = {
@@ -63,6 +65,7 @@ public class WarrantyController {
     }
 
     @GetMapping(path = "/id/{warrantyId}", produces = { MediaType.APPLICATION_JSON_VALUE })
+    @CircuitBreaker(name = "warrantyService", fallbackMethod = "fallbackForGetWarrantyById")
     @Operation(description = "Showing all info about a warranty with given id",
             summary = "Showing warranty with given id",
             responses = {
@@ -135,5 +138,15 @@ public class WarrantyController {
         } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
+    }
+
+    public ResponseEntity<CollectionModel<EntityModel<WarrantyDto>>> fallbackForGetAllWarranties(Exception ex) {
+        log.error("Fallback method executed for GetAllWarranties due to {}", ex.toString());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+    }
+
+    public ResponseEntity<EntityModel<WarrantyDto>> fallbackForGetWarrantyById(Long warrantyId, Exception ex) {
+        log.error("Fallback method executed for GetWarrantyById with warrantyId {} due to {}", warrantyId, ex.toString());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
     }
 }

@@ -3,6 +3,7 @@ package com.savian.cartblitz.controller;
 import com.savian.cartblitz.dto.ReviewDto;
 import com.savian.cartblitz.exception.ResourceNotFoundException;
 import com.savian.cartblitz.service.ReviewService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -43,6 +44,7 @@ public class ReviewController {
     }
 
     @GetMapping(produces = { MediaType.APPLICATION_JSON_VALUE })
+    @CircuitBreaker(name = "reviewService", fallbackMethod = "fallbackForGetAllReviews")
     @Operation(description = "Showing all info about reviews including all fields",
             summary = "Showing all reviews",
             responses = {
@@ -65,6 +67,7 @@ public class ReviewController {
     }
 
     @GetMapping(path = "/id/{reviewId}", produces = { MediaType.APPLICATION_JSON_VALUE })
+    @CircuitBreaker(name = "reviewService", fallbackMethod = "fallbackForGetReviewById")
     @Operation(description = "Showing all info about a review with given id",
             summary = "Showing review with given id",
             responses = {
@@ -230,5 +233,15 @@ public class ReviewController {
         } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
+    }
+
+    public ResponseEntity<CollectionModel<EntityModel<ReviewDto>>> fallbackForGetAllReviews(Exception ex) {
+        log.error("Fallback method executed for GetAllReviews due to {}", ex.toString());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+    }
+
+    public ResponseEntity<EntityModel<ReviewDto>> fallbackForGetReviewById(Long reviewId, Exception ex) {
+        log.error("Fallback method executed for GetReviewById with reviewId {} due to {}", reviewId, ex.toString());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
     }
 }
