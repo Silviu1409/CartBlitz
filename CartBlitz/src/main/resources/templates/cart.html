@@ -178,6 +178,13 @@
                 </div>
                 <br/>
                 <th:block th:if="${errorMessagesMap.empty}">
+                    <form id="applyCouponForm" method="get">
+                        <input type="hidden" name="correlationId" value="sampleCorrelationId"/>
+                        <button type="button" class="btn btn-primary" onclick="applyCoupon()">Apply Coupon</button>
+                    </form>
+                </th:block>
+                <br/>
+                <th:block th:if="${errorMessagesMap.empty}">
                     <form th:action="@{'/order/complete/' + ${cartOrder.orderId}}" method="post">
                         <button type="submit" class="btn btn-primary">Plasează comanda</button>
                     </form>
@@ -211,6 +218,25 @@
                 errorMessage.style.display = 'none';
             }
         }, 10000);
+    </script>
+
+    <script>
+        function applyCoupon() {
+            var form = document.getElementById('applyCouponForm');
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', form.action, true);
+            xhr.setRequestHeader('cartblitz', 'cartblitz');
+
+            xhr.onload = function () {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    window.location.href = '/cart';
+                } else {
+                    alert('Failed to apply coupon.');
+                }
+            };
+
+            xhr.send(new FormData(form));
+        }
     </script>
 </body>
 </html>

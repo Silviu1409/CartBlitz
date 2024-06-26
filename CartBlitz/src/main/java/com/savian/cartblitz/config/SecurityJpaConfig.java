@@ -37,7 +37,7 @@ public class SecurityJpaConfig {
                         .requestMatchers("/home", "/login", "/register", "/categories", "/webjars/**", "/resources/**", "/images/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/product", "/product/brand/**", "/product/tag/**", "/product/priceRange").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/product/**").permitAll()
-                        .requestMatchers("/cart", "/product/add-to-cart/**", "/profile").hasAuthority("ROLE_USER")
+                        .requestMatchers("/cart/**", "/product/add-to-cart/**", "/profile").hasAuthority("ROLE_USER")
                         .requestMatchers(HttpMethod.POST, "/order/complete/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/order/id/**", "/orderProduct/**/orderId/**/productId/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
                         .requestMatchers("/addProduct", "/product/**", "/product/api/**", "/orderProduct/**", "/customer/**", "/order/**", "/review/**", "/tag/**", "/warranty/**").hasAuthority("ROLE_ADMIN")

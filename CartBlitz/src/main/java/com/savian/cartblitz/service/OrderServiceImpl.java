@@ -7,8 +7,10 @@ import com.savian.cartblitz.exception.OrderNotFoundException;
 import com.savian.cartblitz.mapper.OrderMapper;
 import com.savian.cartblitz.model.*;
 import com.savian.cartblitz.repository.CustomerRepository;
+import com.savian.cartblitz.repository.OrderProductRepository;
 import com.savian.cartblitz.repository.OrderRepository;
 import com.savian.cartblitz.repository.ProductRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,18 +21,23 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class OrderServiceImpl implements OrderService{
     private final OrderRepository orderRepository;
     private final CustomerRepository customerRepository;
     private final ProductRepository productRepository;
+    private final OrderProductRepository orderProductRepository;
     private final OrderMapper orderMapper;
+    private CouponServiceProxy couponServiceProxy;
 
-    public OrderServiceImpl(OrderRepository orderRepository, CustomerRepository customerRepository, ProductRepository productRepository, OrderMapper orderMapper) {
+    public OrderServiceImpl(OrderRepository orderRepository, CustomerRepository customerRepository, ProductRepository productRepository, OrderProductRepository orderProductRepository, OrderMapper orderMapper, CouponServiceProxy couponServiceProxy) {
         this.orderRepository = orderRepository;
         this.customerRepository = customerRepository;
         this.productRepository = productRepository;
+        this.orderProductRepository = orderProductRepository;
         this.orderMapper = orderMapper;
+        this.couponServiceProxy = couponServiceProxy;
     }
 
     @Override
@@ -107,6 +114,49 @@ public class OrderServiceImpl implements OrderService{
 
             Order savedOrder = orderRepository.save(prevOrder);
             return orderMapper.orderToOrderDto(savedOrder);
+        }
+        else{
+            throw new OrderNotFoundException(orderId);
+        }
+    }
+
+    @Override
+    public Order applyCoupon(Long orderId, String correlationId) {
+        Optional<Order> optOrder = orderRepository.findById(orderId);
+        if (optOrder.isPresent()) {
+            Order order = optOrder.get();
+            Coupon coupon = couponServiceProxy.getCoupon(correlationId).getBody();
+
+            if(coupon == null){
+                return order;
+            }
+
+            log.info(coupon.getVersionId());
+            log.info("correlation-id coupon: {}", correlationId);
+
+            BigDecimal newTotal = BigDecimal.ZERO;
+
+            for(OrderProduct orderProduct: order.getOrderProducts()){
+                Product product = productRepository.getReferenceById(orderProduct.getProduct().getProductId());
+                orderProduct.getProduct().setPrice(product.getPrice());
+
+                if(coupon.getProductCategory().toLowerCase().equals(orderProduct.getProduct().getCategory())){
+                    double percentPaid = (100 - coupon.getDiscount()) / 100.0;
+
+                    orderProduct.getProduct().setPrice(orderProduct.getProduct().getPrice().multiply(BigDecimal.valueOf(percentPaid)));
+                }
+
+                int quantity = orderProduct.getQuantity();
+                orderProduct.setPrice(orderProduct.getProduct().getPrice().multiply(BigDecimal.valueOf(quantity)));
+
+                orderProductRepository.save(orderProduct);
+
+                newTotal = newTotal.add(orderProduct.getPrice());
+            }
+
+            order.setTotalAmount(newTotal);
+
+            return orderRepository.save(order);
         }
         else{
             throw new OrderNotFoundException(orderId);

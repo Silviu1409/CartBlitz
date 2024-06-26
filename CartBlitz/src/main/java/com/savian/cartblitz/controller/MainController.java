@@ -13,6 +13,7 @@ import com.savian.cartblitz.repository.WarrantyRepository;
 import com.savian.cartblitz.repository.security.AuthorityRepository;
 import com.savian.cartblitz.service.OrderProductService;
 import com.savian.cartblitz.service.OrderService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
@@ -270,6 +271,74 @@ public class MainController {
 
                 model.addAttribute("errorProductQuantity", errorProductQuantity);
             }
+
+            return "cart";
+        } else {
+            return "redirect:/";
+        }
+    }
+
+    @GetMapping(value = "/cart/applyCoupon")
+    @Operation(
+            description = "Apply the current coupon on the shopping cart",
+            summary = "Apply cart coupon",
+            responses = {
+                    @ApiResponse(description = "Apply coupon to cart", responseCode = "200"),
+                    @ApiResponse(description = "Redirect to home", responseCode = "302"),
+                    @ApiResponse(description = "Access denied", responseCode = "403"),
+            }
+    )
+    @CircuitBreaker(name = "applyCouponCart", fallbackMethod = "applyCouponFallback")
+    public String applyCouponCart(@RequestHeader("cartblitz") String correlationId, Principal principal) {
+        String username = principal.getName();
+        Optional<Customer> optionalCustomer = customerRepository.findByUsername(username);
+
+        if (optionalCustomer.isPresent()) {
+            Customer customer = optionalCustomer.get();
+            Optional<Order> cartOrderOptional = customer.getOrders().stream()
+                    .filter(order -> order.getStatus() == OrderStatusEnum.CART)
+                    .findFirst();
+
+            Order cartOrder = cartOrderOptional.orElse(null);
+
+            if(cartOrder != null){
+                if(cartOrder.getOrderProducts().isEmpty()){
+                    orderService.removeOrderById(cartOrder.getOrderId());
+                }
+                else {
+                    cartOrder = orderService.applyCoupon(cartOrder.getOrderId(), correlationId);
+                }
+            }
+
+            return "redirect:/cart";
+        } else {
+            return "redirect:/";
+        }
+    }
+
+    public String applyCouponFallback(String correlationId, Model model, Principal principal, RedirectAttributes redirectAttributes, Throwable throwable) {
+        String username = principal.getName();
+        Optional<Customer> optionalCustomer = customerRepository.findByUsername(username);
+
+        if (optionalCustomer.isPresent()) {
+            Customer customer = optionalCustomer.get();
+            Optional<Order> cartOrderOptional = customer.getOrders().stream()
+                    .filter(order -> order.getStatus() == OrderStatusEnum.CART)
+                    .findFirst();
+
+            Order cartOrder = cartOrderOptional.orElse(null);
+
+            if(cartOrder != null){
+                if(cartOrder.getOrderProducts().isEmpty()){
+                    orderService.removeOrderById(cartOrder.getOrderId());
+                    cartOrder = null;
+                    model.addAttribute("errorProductQuantity", "No active cart found.");
+                } else {
+                    model.addAttribute("errorProductQuantity", "Could not apply coupon. Please try again later.");
+                }
+            }
+
+            model.addAttribute("cartOrder", cartOrder);
 
             return "cart";
         } else {

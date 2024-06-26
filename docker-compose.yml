@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+
+  cartblitz:
+    build:
+      context: ./cartblitz
+    container_name: cartblitz
+    ports:
+      - "8080:8080"
+    networks:
+      - spring-net
+    depends_on:
+      - eureka-server
+      - config-server
+    environment:
+      - SPRING_PROFILES_ACTIVE=sqldocker
+      - CONFIG_SERVER_URI=http://config-server:8070
+
+
+  coupon:
+    build:
+      context: ./coupon
+    container_name: coupon
+    ports:
+      - "8081:8081"
+    networks:
+      - spring-net
+    depends_on:
+      - eureka-server
+      - config-server
+    environment:
+      - CONFIG_SERVER_URI=http://config-server:8070
+
+  config-server:
+    build:
+      context: ./config-server
+    container_name: config-server
+    ports:
+      - "8070:8070"
+    networks:
+      - spring-net
+
+  eureka-server:
+    build:
+      context: ./eureka-server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - spring-net
+
+  gateway:
+    build:
+      context: ./gateway
+    container_name: gateway
+    ports:
+      - "8071:8071"
+    networks:
+      - spring-net
+    depends_on:
+      - eureka-server
+      - config-server
+    environment:
+      - CONFIG_SERVER_URI=http://config-server:8070
+      - EUREKA_SERVER_URI=http://eureka-server:8761
+
+networks:
+  spring-net:
