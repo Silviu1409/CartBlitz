@@ -147,8 +147,8 @@
                                     <i class="fas fa-plus"></i>
                                 </a>
                             </td>
-                            <td class="vertical-center" th:text="${orderProduct.product.price}"></td>
                             <td class="vertical-center" th:text="${orderProduct.price}"></td>
+                            <td class="vertical-center" th:text="${orderProduct.price * orderProduct.quantity}"></td>
                             <td class="vertical-center">
                                 <a th:href="@{'/orderProduct/delete/orderId/' + ${cartOrder.orderId} + '/productId/' + ${orderProduct.product.productId}}" class="btn btn-danger">
                                     <i class="fas fa-xmark"></i> Șterge
@@ -178,9 +178,8 @@
                 </div>
                 <br/>
                 <th:block th:if="${errorMessagesMap.empty}">
-                    <form id="applyCouponForm" method="get">
-                        <input type="hidden" name="correlationId" value="sampleCorrelationId"/>
-                        <button type="button" class="btn btn-primary" onclick="applyCoupon()">Apply Coupon</button>
+                    <form action="/cart/applyCoupon" method="get">
+                        <button type="submit" class="btn btn-primary">Aplică cupon</button>
                     </form>
                 </th:block>
                 <br/>
@@ -218,25 +217,6 @@
                 errorMessage.style.display = 'none';
             }
         }, 10000);
-    </script>
-
-    <script>
-        function applyCoupon() {
-            var form = document.getElementById('applyCouponForm');
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', form.action, true);
-            xhr.setRequestHeader('cartblitz', 'cartblitz');
-
-            xhr.onload = function () {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    window.location.href = '/cart';
-                } else {
-                    alert('Failed to apply coupon.');
-                }
-            };
-
-            xhr.send(new FormData(form));
-        }
     </script>
 </body>
 </html>

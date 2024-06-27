@@ -7,25 +7,24 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import reactor.core.publisher.Mono;
 
+
 @Configuration
 @Slf4j
 public class ResponseFilter {
-    public static final String CORRELATION_ID = "awbd-id";
+    public static final String CORRELATION_ID = "cartblitz";
 
     @Bean
     public GlobalFilter postGlobalFilter() {
-        return (exchange, chain) -> {
-            return chain.filter(exchange).then(Mono.fromRunnable(() -> {
-                                HttpHeaders requestHeaders = exchange.getRequest().getHeaders();
-                                String correlationId = null;
-                                if (requestHeaders.get(CORRELATION_ID) != null)
-                                    correlationId = requestHeaders.get(CORRELATION_ID).stream().findFirst().get();
+        return (exchange, chain) -> chain.filter(exchange).then(Mono.fromRunnable(() -> {
+                            HttpHeaders requestHeaders = exchange.getRequest().getHeaders();
+                            String correlationId = null;
+                            if (requestHeaders.get(CORRELATION_ID) != null)
+                                correlationId = requestHeaders.get(CORRELATION_ID).stream().findFirst().get();
 
-                                log.info("Updated correlation id to response headers: {}", correlationId);
-                                exchange.getResponse().getHeaders().add(CORRELATION_ID, correlationId);
-                            }
-                    )
-            );
-        };
+                            log.info("Updated correlation id to response headers: {}", correlationId);
+                            exchange.getResponse().getHeaders().add(CORRELATION_ID, correlationId);
+                        }
+                )
+        );
     }
 }

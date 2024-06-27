@@ -1,7 +1,4 @@
-version: '3.8'
-
 services:
-
   cartblitz:
     build:
       context: ./cartblitz
@@ -13,11 +10,15 @@ services:
     depends_on:
       - eureka-server
       - config-server
+      - mysql
     environment:
       - SPRING_PROFILES_ACTIVE=sqldocker
-      - CONFIG_SERVER_URI=http://config-server:8070
-
-
+      - spring.cloud.config.uri=http://config-server:8070
+      - eureka.client.serviceUrl.defaultZone=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/cartblitz
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+  
   coupon:
     build:
       context: ./coupon
@@ -30,7 +31,8 @@ services:
       - eureka-server
       - config-server
     environment:
-      - CONFIG_SERVER_URI=http://config-server:8070
+      - spring.cloud.config.uri=http://config-server:8070
+      - eureka.client.serviceUrl.defaultZone=http://eureka-server:8761/eureka/
 
   config-server:
     build:
@@ -40,6 +42,8 @@ services:
       - "8070:8070"
     networks:
       - spring-net
+    environment:
+      - server.port=8070
 
   eureka-server:
     build:
@@ -49,6 +53,11 @@ services:
       - "8761:8761"
     networks:
       - spring-net
+    environment:
+      - server.port=8761
+      - eureka.client.registerWithEureka=false
+      - eureka.client.fetchRegistry=false
+      - eureka.client.serviceUrl.defaultZone=http://eureka-server:8761/eureka/
 
   gateway:
     build:
@@ -62,8 +71,34 @@ services:
       - eureka-server
       - config-server
     environment:
-      - CONFIG_SERVER_URI=http://config-server:8070
-      - EUREKA_SERVER_URI=http://eureka-server:8761
+      - spring.cloud.config.uri=http://config-server:8070
+      - eureka.client.serviceUrl.defaultZone=http://eureka-server:8761/eureka/
+
+  mysql:
+    image: mysql
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - spring-net
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=cartblitz
+      - MYSQL_PASSWORD=root
+    volumes:
+      - ./CartBlitz_DB:/docker-entrypoint-initdb.d/CartBlitz_DB
+      - mysql_data:/var/lib/mysql
+  
+  zipkin-server:
+    image: openzipkin/zipkin
+    container_name: zipkin-server
+    ports:
+      - "9411:9411"
+    networks:
+      - spring-net
 
 networks:
   spring-net:
+
+volumes:
+  mysql_data:

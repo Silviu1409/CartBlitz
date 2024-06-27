@@ -2,7 +2,6 @@ package com.savian.cartblitz.controller;
 
 import com.savian.cartblitz.config.WarrantyValidator;
 import com.savian.cartblitz.dto.CustomerDto;
-import com.savian.cartblitz.dto.OrderProductDto;
 import com.savian.cartblitz.exception.ResourceNotFoundException;
 import com.savian.cartblitz.model.*;
 import com.savian.cartblitz.model.security.Authority;
@@ -37,7 +36,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -233,31 +231,13 @@ public class MainController {
                     cartOrder = null;
                 }
                 else {
-                    BigDecimal actGrandTotal = cartOrder.getTotalAmount(), newGrandTotal = BigDecimal.ZERO;
                     Map<OrderProductId, String> errorMessagesMap = new HashMap<>();
 
                     for (OrderProduct orderProduct : cartOrder.getOrderProducts()) {
-                        BigDecimal productPrice = productRepository.getReferenceById(orderProduct.getProduct().getProductId()).getPrice();
-                        Integer productQuantity = orderProduct.getQuantity();
-                        BigDecimal totalPrice = BigDecimal.valueOf(productQuantity).multiply(productPrice);
-
-                        if (!Objects.equals(orderProduct.getPrice(), totalPrice)) {
-                            OrderProductDto orderProductDto = new OrderProductDto(cartOrder.getOrderId(), orderProduct.getProduct().getProductId(), orderProduct.getQuantity(), totalPrice);
-                            orderProductService.updateOrderProduct(cartOrder.getOrderId(), orderProduct.getProduct().getProductId(), orderProductDto);
-
-                            orderProduct.setPrice(totalPrice);
-                        }
-
-                        newGrandTotal = newGrandTotal.add(totalPrice);
-
                         if (orderProduct.getQuantity() > orderProduct.getProduct().getStockQuantity()) {
                             String errorMessage = "Nu sunt suficiente produse de tipul '" + orderProduct.getProduct().getName() + "' în stoc.";
                             errorMessagesMap.put(orderProduct.getOrderProductId(), errorMessage);
                         }
-                    }
-
-                    if (!Objects.equals(actGrandTotal, newGrandTotal)) {
-                        orderService.updateTotalAmount(cartOrder.getOrderId(), newGrandTotal);
                     }
 
                     model.addAttribute("errorMessagesMap", errorMessagesMap);
@@ -289,7 +269,7 @@ public class MainController {
             }
     )
     @CircuitBreaker(name = "applyCouponCart", fallbackMethod = "applyCouponFallback")
-    public String applyCouponCart(@RequestHeader("cartblitz") String correlationId, Principal principal) {
+    public String applyCouponCart(@RequestHeader(value = "coupon", defaultValue = "coupon") String correlationId, Model model, Principal principal) {
         String username = principal.getName();
         Optional<Customer> optionalCustomer = customerRepository.findByUsername(username);
 
@@ -304,11 +284,15 @@ public class MainController {
             if(cartOrder != null){
                 if(cartOrder.getOrderProducts().isEmpty()){
                     orderService.removeOrderById(cartOrder.getOrderId());
+
+                    return "redirect:/";
                 }
                 else {
                     cartOrder = orderService.applyCoupon(cartOrder.getOrderId(), correlationId);
                 }
             }
+
+            model.addAttribute("cartOrder", cartOrder);
 
             return "redirect:/cart";
         } else {
@@ -316,7 +300,7 @@ public class MainController {
         }
     }
 
-    public String applyCouponFallback(String correlationId, Model model, Principal principal, RedirectAttributes redirectAttributes, Throwable throwable) {
+    public String applyCouponFallback(String correlationId, Model model, Principal principal) {
         String username = principal.getName();
         Optional<Customer> optionalCustomer = customerRepository.findByUsername(username);
 
@@ -334,7 +318,7 @@ public class MainController {
                     cartOrder = null;
                     model.addAttribute("errorProductQuantity", "No active cart found.");
                 } else {
-                    model.addAttribute("errorProductQuantity", "Could not apply coupon. Please try again later.");
+                    model.addAttribute("errorProductQuantity", "Failed to apply coupon.");
                 }
             }
 

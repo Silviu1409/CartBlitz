@@ -138,18 +138,14 @@ public class OrderServiceImpl implements OrderService{
 
             for(OrderProduct orderProduct: order.getOrderProducts()){
                 Product product = productRepository.getReferenceById(orderProduct.getProduct().getProductId());
-                orderProduct.getProduct().setPrice(product.getPrice());
 
-                if(coupon.getProductCategory().toLowerCase().equals(orderProduct.getProduct().getCategory())){
+                if(coupon.getProductCategory().equalsIgnoreCase(product.getCategory())){
                     double percentPaid = (100 - coupon.getDiscount()) / 100.0;
 
-                    orderProduct.getProduct().setPrice(orderProduct.getProduct().getPrice().multiply(BigDecimal.valueOf(percentPaid)));
+                    orderProduct.setPrice(product.getPrice().multiply(BigDecimal.valueOf(percentPaid)));
+
+                    orderProductRepository.save(orderProduct);
                 }
-
-                int quantity = orderProduct.getQuantity();
-                orderProduct.setPrice(orderProduct.getProduct().getPrice().multiply(BigDecimal.valueOf(quantity)));
-
-                orderProductRepository.save(orderProduct);
 
                 newTotal = newTotal.add(orderProduct.getPrice());
             }

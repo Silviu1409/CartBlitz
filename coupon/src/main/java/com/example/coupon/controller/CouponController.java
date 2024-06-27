@@ -17,9 +17,9 @@ public class CouponController {
     private CouponPropertiesConfig configuration;
 
     @GetMapping("/coupon")
-    public ResponseEntity<Coupon> getDiscount(@RequestHeader("cartblitz") String correlationId){
+    public ResponseEntity<Coupon> getDiscount(@RequestHeader(value = "coupon", defaultValue = "coupon") String correlationId){
 
-        Coupon coupon =  new Coupon(configuration.getProductCategory(), configuration.getDiscount(), configuration.getVersionId());
+        Coupon coupon = new Coupon(configuration.getProductCategory(), configuration.getDiscount(), configuration.getVersionId());
 
         log.info("correlation-id discount: {}", correlationId);
         return ResponseEntity.status(HttpStatus.OK).body(coupon);

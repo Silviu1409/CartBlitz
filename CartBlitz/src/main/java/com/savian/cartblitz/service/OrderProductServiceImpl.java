@@ -106,9 +106,9 @@ public class OrderProductServiceImpl implements OrderProductService{
                 prevOrderProduct.setOrder(order);
                 prevOrderProduct.setProduct(product);
                 prevOrderProduct.setQuantity(orderProductDto.getQuantity());
-                prevOrderProduct.setPrice(BigDecimal.valueOf(orderProductDto.getQuantity()).multiply(product.getPrice()));
+                prevOrderProduct.setPrice(orderProductDto.getPrice());
 
-                orderService.modifyTotalAmount(order.getOrderId(), BigDecimal.valueOf(orderProductDto.getQuantity()).multiply(product.getPrice()));
+                orderService.modifyTotalAmount(order.getOrderId(), BigDecimal.valueOf(orderProductDto.getQuantity()).multiply(orderProductDto.getPrice()));
 
                 return orderProductRepository.save(prevOrderProduct);
             }

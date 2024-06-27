@@ -9,12 +9,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+
 @Order(1)
 @Component
 @Slf4j
 public class LogTraceFilter implements GlobalFilter {
 
-    public static final String CORRELATION_ID = "awbd-id";
+    public static final String CORRELATION_ID = "cartblitz";
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -32,8 +33,6 @@ public class LogTraceFilter implements GlobalFilter {
         return chain.filter(exchange);
     }
 
-
-
     private String generateCorrelationId() {
         return java.util.UUID.randomUUID().toString();
     }
@@ -46,11 +45,7 @@ public class LogTraceFilter implements GlobalFilter {
         }
     }
 
-
     private ServerWebExchange setCorrelationId(ServerWebExchange exchange, String correlationId) {
         return exchange.mutate().request(exchange.getRequest().mutate().header(CORRELATION_ID, correlationId).build()).build();
-
     }
-
-
 }

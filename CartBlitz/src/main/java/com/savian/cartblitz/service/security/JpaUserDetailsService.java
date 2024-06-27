@@ -3,7 +3,6 @@ package com.savian.cartblitz.service.security;
 import com.savian.cartblitz.model.Customer;
 import com.savian.cartblitz.model.security.Authority;
 import com.savian.cartblitz.repository.CustomerRepository;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,7 +19,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Profile("mysql")
 public class JpaUserDetailsService implements UserDetailsService {
 
     private final CustomerRepository customerRepository;
